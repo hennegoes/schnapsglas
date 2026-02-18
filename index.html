@@ -1171,15 +1171,17 @@ function alleGlaeserLaden() {
 
   // Pro Gruppe einen Marker setzen
   Object.values(gruppen).forEach(gruppe => {
-    const erstesGlas = gruppe[0];
-    const kat        = gruppe.length === 1 ? erstesGlas.kategorie : null;
-    // Pin zeigt immer das fotoUrl (Internet-Bild), nie das hochgeladene Foto
-    const pinFoto    = erstesGlas.fotoUrl || null;
-    const m = L.marker([erstesGlas.lat, erstesGlas.lng], { icon: markerIcon(kat, pinFoto) })
+    const sortiert = gruppeKanonisch(gruppe);
+    // Kategorie-Farbe: gekauft (blau) hat Vorrang — auch bei gemischten Gruppen
+    const hatGekauft = sortiert.some(g => g.kategorie === "gekauft");
+    const kat        = hatGekauft ? "gekauft"
+                     : sortiert[0].kategorie || null;
+    const pinFoto    = sortiert[0].fotoUrl || null;
+    const m = L.marker([sortiert[0].lat, sortiert[0].lng], { icon: markerIcon(kat, pinFoto) })
       .addTo(map)
-      .bindPopup(gruppenPopupHTML(gruppe, 0), { maxWidth: 300, minWidth: 300 });
+      .bindPopup(gruppenPopupHTML(sortiert, 0), { maxWidth: 300, minWidth: 300 });
 
-    gruppe.forEach(g => { markerMap[g.id] = m; });
+    sortiert.forEach(g => { markerMap[g.id] = m; });
   });
 
   const n = GLAESER.length;
@@ -1188,35 +1190,53 @@ function alleGlaeserLaden() {
 }
 
 /* ── Popup-HTML für eine Gruppe (mit Navigation) ── */
-function gruppenPopupHTML(gruppe, index) {
-  const g = gruppe[index];
-  const gesamt = gruppe.length;
+/* ═══════════════════════════════════════════════════════
+   GRUPPEN-CACHE für Popup-Navigation
+   Speichert Gruppen nach Koordinaten-Key damit onclick
+   kein JSON parsen muss — viel robuster.
+═══════════════════════════════════════════════════════ */
+const gruppenCache = {};
+
+function gruppeKanonisch(gruppe) {
+  // Gekaufte Gläser immer zuerst, dann geschenkte
+  return [...gruppe].sort((a, b) => {
+    if (a.kategorie === "gekauft" && b.kategorie !== "gekauft") return -1;
+    if (b.kategorie === "gekauft" && a.kategorie !== "gekauft") return  1;
+    return 0;
+  });
+}
+
+function gruppenPopupHTML(gruppeRoh, index) {
+  const gruppe  = gruppeKanonisch(gruppeRoh);
+  const g       = gruppe[index];
+  const gesamt  = gruppe.length;
+  const cacheKey = `${g.lat},${g.lng}`;
+
+  // Gruppe im Cache speichern damit Navigation darauf zugreifen kann
+  gruppenCache[cacheKey] = gruppe;
 
   const nav = gesamt > 1 ? `
     <div class="popup-nav">
       <button class="popup-nav-btn"
         ${index === 0 ? "disabled" : ""}
-        onclick="popupNavigation(this, ${JSON.stringify(gruppe.map(x=>x.id)).replace(/"/g,"'")}, ${index - 1})">◀</button>
+        onclick="popupNavigieren('${cacheKey}', ${index - 1})">◀</button>
       <div class="popup-nav-info">
         <strong>${index + 1} / ${gesamt}</strong><br>
         ${gesamt} Gläser an diesem Ort
       </div>
       <button class="popup-nav-btn"
         ${index === gesamt - 1 ? "disabled" : ""}
-        onclick="popupNavigation(this, ${JSON.stringify(gruppe.map(x=>x.id)).replace(/"/g,"'")}, ${index + 1})">▶</button>
+        onclick="popupNavigieren('${cacheKey}', ${index + 1})">▶</button>
     </div>` : "";
 
   return `<div>${popupHTML(g)}${nav}</div>`;
 }
 
-/* ── Navigation im Popup weiterschalten ── */
-function popupNavigation(btn, idsJson, neuerIndex) {
-  // IDs aus dem onclick-Attribut parsen
-  const ids   = JSON.parse(idsJson.replace(/'/g, '"'));
-  const gruppe = ids.map(id => GLAESER.find(g => g.id === id)).filter(Boolean);
-  if (!gruppe.length) return;
+/* ── Navigation per Cache-Key ── */
+function popupNavigieren(cacheKey, neuerIndex) {
+  const gruppe = gruppenCache[cacheKey];
+  if (!gruppe || !gruppe[neuerIndex]) return;
 
-  // Marker dieses Glases finden und Popup aktualisieren
   const m = markerMap[gruppe[0].id];
   if (!m) return;
   m.setPopupContent(gruppenPopupHTML(gruppe, neuerIndex));
@@ -2339,13 +2359,15 @@ function markerAktualisieren(lat, lng) {
 
   if (gruppe.length === 0) return;
 
-  const kat     = gruppe.length === 1 ? gruppe[0].kategorie : null;
-  const pinFoto = gruppe[0].fotoUrl || null;   // Pin zeigt immer das Internet-Bild
-  const m       = L.marker([lat, lng], { icon: markerIcon(kat, pinFoto) })
+  const sortiert   = gruppeKanonisch(gruppe);
+  const hatGekauft = sortiert.some(g => g.kategorie === "gekauft");
+  const kat        = hatGekauft ? "gekauft" : sortiert[0].kategorie || null;
+  const pinFoto    = sortiert[0].fotoUrl || null;
+  const m          = L.marker([lat, lng], { icon: markerIcon(kat, pinFoto) })
     .addTo(map)
-    .bindPopup(gruppenPopupHTML(gruppe, 0), { maxWidth: 300, minWidth: 300 });
+    .bindPopup(gruppenPopupHTML(sortiert, 0), { maxWidth: 300, minWidth: 300 });
 
-  gruppe.forEach(g => { markerMap[g.id] = m; });
+  sortiert.forEach(g => { markerMap[g.id] = m; });
 }
 
 /* ═══════════════════════════════════════════════════════
