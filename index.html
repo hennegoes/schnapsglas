@@ -526,6 +526,91 @@
     }
     .copy-btn:hover { background: rgba(200,134,10,0.08); }
     .copy-btn.copied { color: var(--green); border-color: var(--green); }
+
+    /* ══════════════════════════════════════════
+       GLÄSER-LISTE
+    ══════════════════════════════════════════ */
+    .glaeser-liste {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .glaeser-liste-leer {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--muted);
+      font-size: 0.88rem;
+      font-style: italic;
+    }
+    .glaeser-liste-leer span { display: block; font-size: 2.5rem; margin-bottom: 10px; opacity: 0.3; }
+
+    .glas-karte {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: border-color 0.15s;
+    }
+    .glas-karte:hover { border-color: var(--border-gold); }
+
+    .glas-karte-top {
+      display: flex;
+      gap: 12px;
+      padding: 12px;
+      align-items: center;
+    }
+
+    .glas-karte-foto {
+      width: 52px; height: 52px;
+      border-radius: 8px;
+      object-fit: cover;
+      flex-shrink: 0;
+      background: linear-gradient(135deg, #2D1F05, #5A3A10);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+    }
+    .glas-karte-foto img {
+      width: 100%; height: 100%;
+      object-fit: cover; border-radius: 8px;
+    }
+
+    .glas-karte-info { flex: 1; min-width: 0; }
+    .glas-karte-name {
+      font-size: 0.88rem; color: var(--hell); font-weight: 500;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .glas-karte-land {
+      font-size: 0.63rem; color: var(--gold);
+      letter-spacing: 1.5px; text-transform: uppercase; margin-top: 2px;
+    }
+    .glas-karte-datum {
+      font-size: 0.68rem; color: var(--muted); margin-top: 3px;
+    }
+
+    .glas-karte-aktionen {
+      display: flex;
+      border-top: 1px solid var(--border);
+    }
+
+    .glas-aktion-btn {
+      flex: 1;
+      background: transparent;
+      border: none;
+      padding: 9px 8px;
+      font-family: 'Lora', serif;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: background 0.15s;
+      display: flex; align-items: center; justify-content: center; gap: 5px;
+    }
+    .glas-aktion-btn.bearbeiten {
+      color: var(--gold);
+      border-right: 1px solid var(--border);
+    }
+    .glas-aktion-btn.bearbeiten:hover { background: rgba(200,134,10,0.08); }
+    .glas-aktion-btn.loeschen { color: var(--red); }
+    .glas-aktion-btn.loeschen:hover { background: rgba(148,74,74,0.08); }
   </style>
 </head>
 <body>
@@ -552,6 +637,18 @@
 <button id="fab" onclick="formularOeffnen()">
   <span>＋</span> Glas hinzufügen
 </button>
+
+<!-- ══ LISTE BUTTON (nach Login) ══ -->
+<button id="liste-btn" onclick="listeOeffnen()" style="
+  position:fixed; bottom:24px; left:16px; z-index:800;
+  background:var(--panel); border:1px solid var(--border-gold);
+  border-radius:28px; padding:14px 22px;
+  font-family:'Lora',serif; font-size:0.88rem;
+  color:var(--gold); cursor:pointer;
+  box-shadow:0 6px 28px rgba(0,0,0,0.5);
+  display:none; align-items:center; gap:8px;
+  transition:all 0.2s; white-space:nowrap;
+">📋 Meine Gläser</button>
 
 <!-- ══ EXPORT BUTTON (nach Login) ══ -->
 <button id="export-btn" onclick="exportPanel()">
@@ -593,10 +690,10 @@
 ═══════════════════════════════════════════════════════ */
 const CONFIG = {
   // Passwort für den Admin-Bereich
-  passwort: "meinPasswort123",
+  passwort: "#Flugzeug24!",
 
   // Cloudinary – nach Registrierung ausfüllen:
-  cloudinary_cloud_name: "DEIN_CLOUD_NAME",   // z.B. "abc123xyz"
+  cloudinary_cloud_name: "dpp3xfy5q",   // z.B. "abc123xyz"
   cloudinary_upload_preset: "schnapsglas",     // Upload Preset Name
 };
 
@@ -606,6 +703,7 @@ const CONFIG = {
 let eingeloggt   = false;
 let aktuellesFoto = null;   // { blob, dataUrl } – vom Handy gewählt
 let naechsteId   = Math.max(0, ...GLAESER.map(g => g.id)) + 1;
+let markerMap    = {};      // id → Leaflet-Marker (für späteres Entfernen)
 
 /* ═══════════════════════════════════════════════════════
    KARTE INITIALISIEREN
@@ -672,9 +770,10 @@ function formatDatum(iso) {
 ═══════════════════════════════════════════════════════ */
 function alleGlaeserLaden() {
   GLAESER.forEach(g => {
-    L.marker([g.lat, g.lng], { icon: markerIcon() })
+    const m = L.marker([g.lat, g.lng], { icon: markerIcon() })
       .addTo(map)
       .bindPopup(popupHTML(g), { maxWidth: 280, minWidth: 280 });
+    markerMap[g.id] = m;
   });
 
   const n = GLAESER.length;
@@ -743,8 +842,9 @@ function passwortPruefen() {
   if (eingabe === CONFIG.passwort) {
     eingeloggt = true;
     overlaySchliessen();
-    // FAB und Export-Button einblenden
+    // FAB, Liste-Button und Export-Button einblenden
     document.getElementById("fab").style.display        = "flex";
+    document.getElementById("liste-btn").style.display  = "flex";
     document.getElementById("export-btn").style.display = "flex";
     setTimeout(() => formularOeffnen(), 300);
   } else {
@@ -916,10 +1016,11 @@ async function glasHinzufuegen() {
   GLAESER.push(glas);
 
   // Marker auf Karte setzen
-  L.marker([lat, lng], { icon: markerIcon() })
+  const neuerMarker = L.marker([lat, lng], { icon: markerIcon() })
     .addTo(map)
     .bindPopup(popupHTML(glas), { maxWidth: 280, minWidth: 280 })
     .openPopup();
+  markerMap[glas.id] = neuerMarker;
 
   // Karte hinfliegen
   map.flyTo([lat, lng], Math.max(map.getZoom(), 6), { duration: 1.2 });
@@ -1060,6 +1161,207 @@ function dataJsHerunterladen() {
 
   // Speicher wieder freigeben
   URL.revokeObjectURL(url);
+}
+
+/* ═══════════════════════════════════════════════════════
+   GLÄSER-LISTE ÖFFNEN
+═══════════════════════════════════════════════════════ */
+function listeOeffnen() {
+  const eintraege = GLAESER.length === 0
+    ? `<div class="glaeser-liste-leer"><span>🥃</span>Noch keine Gläser eingetragen.</div>`
+    : GLAESER.map(g => `
+        <div class="glas-karte" id="glas-karte-${g.id}">
+          <div class="glas-karte-top">
+            <div class="glas-karte-foto">
+              ${g.foto
+                ? `<img src="${g.foto}" alt="${esc(g.name)}">`
+                : `🥃`}
+            </div>
+            <div class="glas-karte-info">
+              <div class="glas-karte-name">${esc(g.name)}</div>
+              <div class="glas-karte-land">${esc(g.land)}</div>
+              ${g.datum ? `<div class="glas-karte-datum">📅 ${formatDatum(g.datum)}</div>` : ""}
+            </div>
+          </div>
+          <div class="glas-karte-aktionen">
+            <button class="glas-aktion-btn bearbeiten" onclick="glasBearbeitenOeffnen(${g.id})">
+              ✏ Bearbeiten
+            </button>
+            <button class="glas-aktion-btn loeschen" onclick="glasLoeschen(${g.id})">
+              🗑 Löschen
+            </button>
+          </div>
+        </div>`).join("");
+
+  setSheet(
+    `📋 Meine Gläser (${GLAESER.length})`,
+    `<div class="glaeser-liste">${eintraege}</div>`,
+    `<button class="btn-secondary" onclick="overlaySchliessen()">Schließen</button>
+     <button class="btn-primary" onclick="formularOeffnen()">＋ Neues Glas</button>`
+  );
+  overlayOeffnen();
+}
+
+/* ═══════════════════════════════════════════════════════
+   GLAS BEARBEITEN – Formular vorausgefüllt öffnen
+═══════════════════════════════════════════════════════ */
+function glasBearbeitenOeffnen(id) {
+  const g = GLAESER.find(g => g.id === id);
+  if (!g) return;
+  aktuellesFoto = null;
+
+  const body = `
+    <div class="feedback-msg" id="form-feedback"></div>
+    <div class="upload-progress" id="upload-progress">
+      <div class="spinner"></div>
+      <span>Foto wird hochgeladen…</span>
+    </div>
+
+    <div class="form-section">📸 Foto</div>
+    <div class="form-group">
+      <div class="foto-upload-area ${g.foto ? "has-foto" : ""}"
+           id="foto-area" onclick="document.getElementById('foto-input').click()">
+        <div class="foto-placeholder" id="foto-placeholder"
+             style="${g.foto ? "display:none" : ""}">
+          <span class="icon">📷</span>
+          <p>Foto aufnehmen oder aus Galerie wählen</p>
+          <span>JPG, PNG – max. 10 MB</span>
+        </div>
+        <img class="foto-preview" id="foto-preview"
+             src="${g.foto || ""}"
+             style="${g.foto ? "" : "display:none"}">
+        <span class="foto-change" id="foto-change"
+              style="${g.foto ? "" : "display:none"}">Foto ändern</span>
+      </div>
+      <input type="file" id="foto-input" accept="image/*" capture="environment"
+             onchange="fotoGewaehlt(this)">
+    </div>
+
+    <div class="form-section">📍 Ort</div>
+    <div class="form-group">
+      <label>Ort &amp; Land <span class="req">*</span></label>
+      <input type="text" id="f-name" value="${esc(g.name)}" placeholder="z.B. Berlin, Deutschland">
+    </div>
+    <div class="form-group">
+      <label>Land (kurz) <span class="req">*</span></label>
+      <input type="text" id="f-land" value="${esc(g.land)}" placeholder="z.B. Deutschland">
+    </div>
+    <div class="form-group">
+      <label>Koordinaten <span class="req">*</span></label>
+      <div class="coord-row">
+        <input type="number" id="f-lat" value="${g.lat}" placeholder="Breitengrad" step="any">
+        <input type="number" id="f-lng" value="${g.lng}" placeholder="Längengrad"  step="any">
+      </div>
+      <div class="coord-hint">
+        🗺 <a href="https://maps.google.com" target="_blank">Google Maps</a>
+        → Ort antippen → Koordinaten ablesen
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Datum des Kaufs</label>
+      <input type="date" id="f-datum" value="${g.datum || ""}">
+    </div>
+
+    <div class="form-section">🥃 Geschichte</div>
+    <div class="form-group">
+      <label>Deine persönliche Geschichte <span class="req">*</span></label>
+      <textarea id="f-text"
+        placeholder="Wo hast du das Glas gefunden?">${esc(g.text)}</textarea>
+    </div>
+  `;
+
+  const footer = `
+    <button class="btn-secondary" onclick="listeOeffnen()">← Zurück zur Liste</button>
+    <button class="btn-primary" id="submit-btn" onclick="glasSpeichern(${id})">💾 Änderungen speichern</button>
+  `;
+
+  setSheet(`✏ Bearbeiten`, body, footer);
+  overlayOeffnen();
+}
+
+/* ═══════════════════════════════════════════════════════
+   GLAS SPEICHERN (nach Bearbeitung)
+═══════════════════════════════════════════════════════ */
+async function glasSpeichern(id) {
+  const idx  = GLAESER.findIndex(g => g.id === id);
+  if (idx < 0) return;
+
+  const name  = document.getElementById("f-name")?.value.trim()  || "";
+  const land  = document.getElementById("f-land")?.value.trim()  || "";
+  const lat   = parseFloat(document.getElementById("f-lat")?.value  || "");
+  const lng   = parseFloat(document.getElementById("f-lng")?.value  || "");
+  const datum = document.getElementById("f-datum")?.value || "";
+  const text  = document.getElementById("f-text")?.value.trim()  || "";
+
+  if (!name || !land || !text) {
+    zeigeFeedback("form-feedback", "Bitte Ort, Land und Geschichte ausfüllen.", "err"); return;
+  }
+  if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+    zeigeFeedback("form-feedback", "Ungültige Koordinaten. Breitengrad: −90 bis 90, Längengrad: −180 bis 180.", "err"); return;
+  }
+
+  const btn = document.getElementById("submit-btn");
+  btn.disabled = true;
+
+  // Foto: neues hochladen oder altes behalten
+  let fotoUrl = GLAESER[idx].foto;
+  if (aktuellesFoto) {
+    if (CONFIG.cloudinary_cloud_name === "DEIN_CLOUD_NAME") {
+      zeigeFeedback("form-feedback", "⚠ Cloudinary nicht eingerichtet. Foto wird nicht aktualisiert.", "err");
+    } else {
+      document.getElementById("upload-progress").classList.add("active");
+      const neueFotoUrl = await fotoHochladen(aktuellesFoto.blob);
+      document.getElementById("upload-progress").classList.remove("active");
+      if (neueFotoUrl) fotoUrl = neueFotoUrl;
+      else zeigeFeedback("form-feedback", "Foto-Upload fehlgeschlagen. Altes Foto bleibt.", "err");
+    }
+  }
+
+  // Daten aktualisieren
+  GLAESER[idx] = { id, name, land, lat, lng, foto: fotoUrl, text, datum };
+
+  // Alten Marker entfernen & neuen setzen
+  if (markerMap[id]) {
+    map.removeLayer(markerMap[id]);
+    delete markerMap[id];
+  }
+  const neuerMarker = L.marker([lat, lng], { icon: markerIcon() })
+    .addTo(map)
+    .bindPopup(popupHTML(GLAESER[idx]), { maxWidth: 280, minWidth: 280 });
+  markerMap[id] = neuerMarker;
+
+  // Zähler (Anzahl bleibt gleich, aber aktualisieren)
+  const n = GLAESER.length;
+  document.getElementById("zaehler").textContent = n + (n === 1 ? " Glas" : " Gläser");
+
+  overlaySchliessen();
+  setTimeout(() => exportHinweis(name), 400);
+}
+
+/* ═══════════════════════════════════════════════════════
+   GLAS LÖSCHEN
+═══════════════════════════════════════════════════════ */
+function glasLoeschen(id) {
+  const g = GLAESER.find(g => g.id === id);
+  if (!g) return;
+  if (!confirm(`"${g.name}" wirklich löschen?`)) return;
+
+  // Marker von der Karte entfernen
+  if (markerMap[id]) {
+    map.removeLayer(markerMap[id]);
+    delete markerMap[id];
+  }
+
+  // Aus Array entfernen
+  const idx = GLAESER.findIndex(g => g.id === id);
+  if (idx >= 0) GLAESER.splice(idx, 1);
+
+  // Zähler aktualisieren
+  const n = GLAESER.length;
+  document.getElementById("zaehler").textContent = n + (n === 1 ? " Glas" : " Gläser");
+
+  // Liste neu laden (damit die Karte aktuell bleibt)
+  listeOeffnen();
 }
 
 /* ═══════════════════════════════════════════════════════
