@@ -593,10 +593,10 @@
 ═══════════════════════════════════════════════════════ */
 const CONFIG = {
   // Passwort für den Admin-Bereich
-  passwort: "#Flugzeug24!",
+  passwort: "meinPasswort123",
 
   // Cloudinary – nach Registrierung ausfüllen:
-  cloudinary_cloud_name: "dpp3xfy5q",   // z.B. "abc123xyz"
+  cloudinary_cloud_name: "DEIN_CLOUD_NAME",   // z.B. "abc123xyz"
   cloudinary_upload_preset: "schnapsglas",     // Upload Preset Name
 };
 
@@ -973,12 +973,15 @@ function exportHinweis(name) {
         auf GitHub hoch.
       </p>
     </div>
-    <div class="form-section">📋 Deine neue data.js</div>
-    <div class="code-box" id="export-code">${esc(generiereDataJs())}</div>
-    <button class="copy-btn" id="copy-btn" onclick="codeKopieren()">📋 In Zwischenablage kopieren</button>
+    <div class="form-section">💾 Deine neue data.js</div>
+    <p style="color:var(--muted); font-size:0.79rem; line-height:1.6; margin-bottom:12px;">
+      Lade die Datei herunter und ersetze damit die <code style="color:var(--gold)">data.js</code>
+      in deinem GitHub-Repository (Datei anklicken → ✏ Bearbeiten → alles ersetzen → Commit).
+    </p>
     `,
     `<button class="btn-secondary" onclick="overlaySchliessen()">Schließen</button>
-     <button class="btn-primary" onclick="formularOeffnen()">＋ Nächstes Glas</button>`
+     <button class="btn-primary" onclick="formularOeffnen()">＋ Nächstes Glas</button>
+     <button class="btn-primary" style="background:var(--green,#4A9460)" onclick="dataJsHerunterladen()">⬇ data.js herunterladen</button>`
   );
   overlayOeffnen();
 }
@@ -996,10 +999,13 @@ function exportPanel() {
       <code style="color:var(--gold)">data.js</code> auf GitHub,
       und committe die Änderung. Deine Karte wird automatisch aktualisiert.
     </p>
-    <div class="form-section">📋 data.js Inhalt</div>
-    <div class="code-box">${esc(generiereDataJs())}</div>
-    <button class="copy-btn" id="copy-btn" onclick="codeKopieren()">📋 In Zwischenablage kopieren</button>`,
-    `<button class="btn-secondary" onclick="overlaySchliessen()">Schließen</button>`
+    <div class="form-section">💾 data.js Inhalt</div>
+    <p style="color:var(--muted); font-size:0.79rem; line-height:1.6; margin-bottom:12px;">
+      Datei herunterladen → in deinem GitHub-Repository <code style="color:var(--gold)">data.js</code>
+      anklicken → ✏ Bearbeiten → alles ersetzen → Commit.
+    </p>`,
+    `<button class="btn-secondary" onclick="overlaySchliessen()">Schließen</button>
+     <button class="btn-primary" style="background:var(--green,#4A9460)" onclick="dataJsHerunterladen()">⬇ data.js herunterladen</button>`
   );
   overlayOeffnen();
 }
@@ -1035,19 +1041,25 @@ function generiereDataJs() {
 }
 
 /* ═══════════════════════════════════════════════════════
-   CODE KOPIEREN
+   DATA.JS HERUNTERLADEN
+   Erstellt eine echte .js-Datei und löst den Browser-
+   Download aus — kein Copy-Paste mehr nötig.
 ═══════════════════════════════════════════════════════ */
-function codeKopieren() {
-  const code = generiereDataJs();
-  navigator.clipboard.writeText(code).then(() => {
-    const btn = document.getElementById("copy-btn");
-    btn.textContent = "✓ Kopiert!";
-    btn.classList.add("copied");
-    setTimeout(() => {
-      btn.textContent = "📋 In Zwischenablage kopieren";
-      btn.classList.remove("copied");
-    }, 2500);
-  });
+function dataJsHerunterladen() {
+  const inhalt = generiereDataJs();
+
+  // Datei-Objekt im Speicher erstellen
+  const blob = new Blob([inhalt], { type: "text/javascript;charset=utf-8;" });
+
+  // Temporären Download-Link erzeugen und klicken
+  const url = URL.createObjectURL(blob);
+  const a   = document.createElement("a");
+  a.href     = url;
+  a.download = "data.js";
+  a.click();
+
+  // Speicher wieder freigeben
+  URL.revokeObjectURL(url);
 }
 
 /* ═══════════════════════════════════════════════════════
