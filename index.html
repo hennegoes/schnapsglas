@@ -968,7 +968,7 @@
 ═══════════════════════════════════════════════════════ */
 const CONFIG = {
   // Passwort für den Admin-Bereich
-  passwort: "Flugzeug24",
+  passwort: "Flugzeug",
 
   // Cloudinary – nach Registrierung ausfüllen:
   cloudinary_cloud_name: "dpp3xfy5q",   // z.B. "abc123xyz"
@@ -1827,6 +1827,7 @@ function csvImportieren(input) {
         text:      kopf.indexOf("text"),
         datum:     kopf.indexOf("datum"),
         kategorie: kopf.indexOf("kategorie"),
+        fotoUrl:   kopf.indexOf("fotourl"),
       };
 
       // Pflichtfelder prüfen
@@ -1855,6 +1856,7 @@ function csvImportieren(input) {
         const text      = (felder[idx.text]  || "").trim();
         const datum     = idx.datum     >= 0 ? (felder[idx.datum]     || "").trim() : "";
         const kategorie = idx.kategorie >= 0 ? (felder[idx.kategorie] || "").trim().toLowerCase() : "";
+        const fotoUrl   = idx.fotoUrl   >= 0 ? (felder[idx.fotoUrl]   || "").trim() : "";
 
         // Zeile validieren
         if (!name || !land || !text) {
@@ -1893,7 +1895,8 @@ function csvImportieren(input) {
         const glas = {
           id:    naechsteId++,
           name, land, lat, lng,
-          foto:  null,
+          foto:     fotoUrl || null,
+          fotoUrl:  fotoUrl || null,
           text,
           datum: datumFormatiert || null,
           kategorie: ["gekauft","geschenkt"].includes(kategorie) ? kategorie : null
@@ -1998,9 +2001,9 @@ function csvFeedback(text, typ) {
 /* ── Vorlage-CSV herunterladen (Hilfsfunktion, falls nötig) ── */
 function csvVorlageHerunterladen() {
   const inhalt =
-    "name;land;lat;lng;text;datum;kategorie\n" +
-    "Berlin, Deutschland;Deutschland;52.52;13.405;Erstes Glas meiner Sammlung – Souvenir vom Stadtbummel.;2024-06-15;gekauft\n" +
-    "Wien, Österreich;Österreich;48.2082;16.3738;Schönes Glasl vom Naschmarkt – ein Geschenk von Anna.;2024-08-20;geschenkt\n";
+    "name;land;lat;lng;text;datum;kategorie;fotoUrl\n" +
+    "Berlin, Deutschland;Deutschland;52.52;13.405;Erstes Glas meiner Sammlung – Souvenir vom Stadtbummel.;2024-06-15;gekauft;\n" +
+    "Wien, Österreich;Österreich;48.2082;16.3738;Schönes Glasl vom Naschmarkt – ein Geschenk von Anna.;2024-08-20;geschenkt;https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Wien_Schoenbrunn_Schloss.jpg/320px-Wien_Schoenbrunn_Schloss.jpg\n";
 
   const blob = new Blob(["\uFEFF" + inhalt], { type: "text/csv;charset=utf-8;" });
   const url  = URL.createObjectURL(blob);
