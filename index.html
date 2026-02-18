@@ -147,22 +147,30 @@
     /* Farb-Varianten */
     .marker-pin.gekauft {
       background: #3B82F6;
-      border-color: #BFDBFE;
-      box-shadow: 0 3px 12px rgba(59,130,246,0.6);
+      border: 3.5px solid #93C5FD;
+      box-shadow: 0 3px 12px rgba(59,130,246,0.7), 0 0 0 1.5px #1D4ED8;
     }
-    .marker-pin.gekauft:hover  { box-shadow: 0 5px 20px rgba(59,130,246,0.8); }
+    .marker-pin.gekauft:hover  { box-shadow: 0 5px 20px rgba(59,130,246,0.9), 0 0 0 1.5px #1D4ED8; }
     .marker-pin.geschenkt {
       background: #EA580C;
-      border-color: #FED7AA;
-      box-shadow: 0 3px 12px rgba(234,88,12,0.6);
+      border: 3.5px solid #FCA46A;
+      box-shadow: 0 3px 12px rgba(234,88,12,0.7), 0 0 0 1.5px #9A3412;
     }
-    .marker-pin.geschenkt:hover { box-shadow: 0 5px 20px rgba(234,88,12,0.8); }
+    .marker-pin.geschenkt:hover { box-shadow: 0 5px 20px rgba(234,88,12,0.9), 0 0 0 1.5px #9A3412; }
 
-    /* Foto-Pin bekommt weißen Rahmen unabhängig von Kategorie */
+    /* Foto-Pin: Kategorie-Farbe als starker Rand sichtbar */
     .marker-pin.hat-foto {
-      border: 2.5px solid #fff;
+      border: 3.5px solid #fff;
       box-shadow: 0 3px 14px rgba(0,0,0,0.5);
       padding: 0;
+    }
+    .marker-pin.hat-foto.gekauft {
+      border: 3.5px solid #3B82F6;
+      box-shadow: 0 3px 14px rgba(59,130,246,0.7), 0 0 0 1.5px #1D4ED8;
+    }
+    .marker-pin.hat-foto.geschenkt {
+      border: 3.5px solid #EA580C;
+      box-shadow: 0 3px 14px rgba(234,88,12,0.7), 0 0 0 1.5px #9A3412;
     }
     .marker-pin.hat-foto:hover {
       transform: rotate(-45deg) scale(1.15);
@@ -561,6 +569,49 @@
     }
     .copy-btn:hover { background: rgba(200,134,10,0.08); }
     .copy-btn.copied { color: var(--green); border-color: var(--green); }
+
+    /* ══════════════════════════════════════════
+       SUCHE IN DER GLÄSER-LISTE
+    ══════════════════════════════════════════ */
+    .liste-suche {
+      position: relative;
+      margin-bottom: 14px;
+    }
+    .liste-suche input {
+      width: 100%;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border-gold);
+      border-radius: 10px;
+      padding: 10px 36px 10px 38px;
+      font-family: 'Lora', serif;
+      font-size: 0.85rem;
+      color: var(--hell);
+      outline: none;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .liste-suche input:focus {
+      border-color: var(--gold);
+      background: rgba(200,134,10,0.06);
+    }
+    .liste-suche input::placeholder { color: var(--muted); opacity: 0.7; }
+    .liste-suche-icon {
+      position: absolute; left: 12px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 15px; pointer-events: none;
+    }
+    .liste-suche-loeschen {
+      position: absolute; right: 10px; top: 50%;
+      transform: translateY(-50%);
+      background: transparent; border: none;
+      color: var(--muted); font-size: 16px; cursor: pointer;
+      display: none; padding: 2px 4px; line-height: 1;
+    }
+    .liste-suche-loeschen.sichtbar { display: block; }
+    .liste-suche-anzahl {
+      font-size: 0.7rem; color: var(--muted);
+      text-align: center; margin-top: -8px; margin-bottom: 10px;
+    }
+    .liste-suche-anzahl span { color: var(--gold); font-weight: 600; }
 
     /* ══════════════════════════════════════════
        GLÄSER-LISTE
@@ -1588,42 +1639,23 @@ function dataJsHerunterladen() {
 /* ═══════════════════════════════════════════════════════
    GLÄSER-LISTE ÖFFNEN
 ═══════════════════════════════════════════════════════ */
-function listeOeffnen() {
-  const eintraege = GLAESER.length === 0
-    ? `<div class="glaeser-liste-leer"><span>🥃</span>Noch keine Gläser eingetragen.</div>`
-    : GLAESER.map(g => `
-        <div class="glas-karte" id="glas-karte-${g.id}">
-          <div class="glas-karte-top">
-            <div class="glas-karte-foto">
-              ${g.foto
-                ? `<img src="${g.foto}" alt="${esc(g.name)}">`
-                : `🥃`}
-            </div>
-            <div class="glas-karte-info">
-              <div class="glas-karte-name">${esc(g.name)}</div>
-              <div class="glas-karte-land">${esc(g.land)}</div>
-              ${g.kategorie === "gekauft"
-                ? `<div class="glas-karte-kategorie gekauft">✈ Gekauft</div>`
-                : g.kategorie === "geschenkt"
-                ? `<div class="glas-karte-kategorie geschenkt">🎁 Geschenkt</div>`
-                : ""}
-              ${g.datum ? `<div class="glas-karte-datum">📅 ${formatDatum(g.datum)}</div>` : ""}
-            </div>
-          </div>
-          <div class="glas-karte-aktionen">
-            <button class="glas-aktion-btn bearbeiten" onclick="glasBearbeitenOeffnen(${g.id})">
-              ✏ Bearbeiten
-            </button>
-            <button class="glas-aktion-btn loeschen" onclick="glasLoeschen(${g.id})">
-              🗑 Löschen
-            </button>
-          </div>
-        </div>`).join("");
+function listeOeffnen(suchbegriff) {
+  suchbegriff = suchbegriff ?? "";
 
   setSheet(
     `📋 Meine Gläser (${GLAESER.length})`,
-    `<div class="glaeser-liste">${eintraege}</div>
-     <!-- Versteckter File-Input für CSV-Import -->
+    `<div class="liste-suche">
+       <span class="liste-suche-icon">🔎</span>
+       <input type="text" id="liste-suche-input"
+              placeholder="Name, Land, Geschichte durchsuchen…"
+              value="${esc(suchbegriff)}"
+              oninput="listeFiltern(this.value)">
+       <button class="liste-suche-loeschen ${suchbegriff ? "sichtbar" : ""}"
+               id="liste-suche-loeschen"
+               onclick="listeFiltern(''); document.getElementById('liste-suche-input').value=''; document.getElementById('liste-suche-input').focus()">✕</button>
+     </div>
+     <div class="liste-suche-anzahl" id="liste-suche-anzahl"></div>
+     <div class="glaeser-liste" id="glaeser-liste-inhalt"></div>
      <input type="file" id="csv-input" accept=".csv" style="display:none"
             onchange="csvImportieren(this)">`,
     `<button class="btn-secondary" onclick="overlaySchliessen()">Schließen</button>
@@ -1637,7 +1669,88 @@ function listeOeffnen() {
      </button>
      <button class="btn-primary" onclick="formularOeffnen()">＋ Neues Glas</button>`
   );
+
   overlayOeffnen();
+
+  // Liste sofort befüllen
+  listeFiltern(suchbegriff);
+
+  // Fokus auf Suche setzen (leicht verzögert)
+  setTimeout(() => document.getElementById("liste-suche-input")?.focus(), 400);
+}
+
+/* ── Live-Filterung der Gläser-Liste ── */
+function listeFiltern(begriff) {
+  const q = (begriff || "").toLowerCase().trim();
+
+  // X-Button ein-/ausblenden
+  const loeschBtn = document.getElementById("liste-suche-loeschen");
+  if (loeschBtn) loeschBtn.classList.toggle("sichtbar", q.length > 0);
+
+  // Gläser filtern
+  const gefunden = q === ""
+    ? GLAESER
+    : GLAESER.filter(g =>
+        (g.name  || "").toLowerCase().includes(q) ||
+        (g.land  || "").toLowerCase().includes(q) ||
+        (g.text  || "").toLowerCase().includes(q) ||
+        (g.datum || "").includes(q)
+      );
+
+  // Trefferzahl anzeigen
+  const anzahlEl = document.getElementById("liste-suche-anzahl");
+  if (anzahlEl) {
+    anzahlEl.innerHTML = q
+      ? `<span>${gefunden.length}</span> von ${GLAESER.length} Gläsern gefunden`
+      : "";
+  }
+
+  // Karten rendern
+  const container = document.getElementById("glaeser-liste-inhalt");
+  if (!container) return;
+
+  if (gefunden.length === 0) {
+    container.innerHTML = `<div class="glaeser-liste-leer">
+      <span>🔎</span>Keine Gläser für „${esc(q)}" gefunden.
+    </div>`;
+    return;
+  }
+
+  // Suchbegriff im Text hervorheben
+  const hervorheben = (str) => {
+    if (!q || !str) return esc(str || "");
+    return esc(str).replace(
+      new RegExp(esc(q).replace(/[.*+?^${}()|[\]\\]/g,"\\$&"), "gi"),
+      m => `<mark style="background:rgba(200,134,10,0.3);color:var(--gold-hell);border-radius:2px">${m}</mark>`
+    );
+  };
+
+  container.innerHTML = gefunden.map(g => `
+    <div class="glas-karte" id="glas-karte-${g.id}">
+      <div class="glas-karte-top">
+        <div class="glas-karte-foto">
+          ${g.foto ? `<img src="${g.foto}" alt="${esc(g.name)}">` : `🥃`}
+        </div>
+        <div class="glas-karte-info">
+          <div class="glas-karte-name">${hervorheben(g.name)}</div>
+          <div class="glas-karte-land">${hervorheben(g.land)}</div>
+          ${g.kategorie === "gekauft"
+            ? `<div class="glas-karte-kategorie gekauft">✈ Gekauft</div>`
+            : g.kategorie === "geschenkt"
+            ? `<div class="glas-karte-kategorie geschenkt">🎁 Geschenkt</div>`
+            : ""}
+          ${g.datum ? `<div class="glas-karte-datum">📅 ${formatDatum(g.datum)}</div>` : ""}
+        </div>
+      </div>
+      <div class="glas-karte-aktionen">
+        <button class="glas-aktion-btn bearbeiten" onclick="glasBearbeitenOeffnen(${g.id})">
+          ✏ Bearbeiten
+        </button>
+        <button class="glas-aktion-btn loeschen" onclick="glasLoeschen(${g.id})">
+          🗑 Löschen
+        </button>
+      </div>
+    </div>`).join("");
 }
 
 /* ═══════════════════════════════════════════════════════
