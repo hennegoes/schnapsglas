@@ -147,30 +147,30 @@
     /* Farb-Varianten */
     .marker-pin.gekauft {
       background: #3B82F6;
-      border: 3.5px solid #93C5FD;
-      box-shadow: 0 3px 12px rgba(59,130,246,0.7), 0 0 0 1.5px #1D4ED8;
+      border: 2.5px solid rgba(147,197,253,0.85);
+      box-shadow: 0 3px 12px rgba(59,130,246,0.7), 0 0 0 1.5px rgba(29,78,216,0.85);
     }
-    .marker-pin.gekauft:hover  { box-shadow: 0 5px 20px rgba(59,130,246,0.9), 0 0 0 1.5px #1D4ED8; }
+    .marker-pin.gekauft:hover  { box-shadow: 0 5px 20px rgba(59,130,246,0.9), 0 0 0 1.5px rgba(29,78,216,0.85); }
     .marker-pin.geschenkt {
       background: #EA580C;
-      border: 3.5px solid #FCA46A;
-      box-shadow: 0 3px 12px rgba(234,88,12,0.7), 0 0 0 1.5px #9A3412;
+      border: 2.5px solid rgba(252,164,106,0.85);
+      box-shadow: 0 3px 12px rgba(234,88,12,0.7), 0 0 0 1.5px rgba(154,52,18,0.85);
     }
-    .marker-pin.geschenkt:hover { box-shadow: 0 5px 20px rgba(234,88,12,0.9), 0 0 0 1.5px #9A3412; }
+    .marker-pin.geschenkt:hover { box-shadow: 0 5px 20px rgba(234,88,12,0.9), 0 0 0 1.5px rgba(154,52,18,0.85); }
 
-    /* Foto-Pin: Kategorie-Farbe als starker Rand sichtbar */
+    /* Foto-Pin: Kategorie-Farbe als Rand sichtbar */
     .marker-pin.hat-foto {
-      border: 3.5px solid #fff;
+      border: 2.5px solid rgba(255,255,255,0.85);
       box-shadow: 0 3px 14px rgba(0,0,0,0.5);
       padding: 0;
     }
     .marker-pin.hat-foto.gekauft {
-      border: 3.5px solid #3B82F6;
-      box-shadow: 0 3px 14px rgba(59,130,246,0.7), 0 0 0 1.5px #1D4ED8;
+      border: 2.5px solid rgba(59,130,246,0.85);
+      box-shadow: 0 3px 14px rgba(59,130,246,0.7), 0 0 0 1.5px rgba(29,78,216,0.85);
     }
     .marker-pin.hat-foto.geschenkt {
-      border: 3.5px solid #EA580C;
-      box-shadow: 0 3px 14px rgba(234,88,12,0.7), 0 0 0 1.5px #9A3412;
+      border: 2.5px solid rgba(234,88,12,0.85);
+      box-shadow: 0 3px 14px rgba(234,88,12,0.7), 0 0 0 1.5px rgba(154,52,18,0.85);
     }
     .marker-pin.hat-foto:hover {
       transform: rotate(-45deg) scale(1.15);
@@ -1960,7 +1960,7 @@ function glasLoeschen(id) {
    Format: UTF-8, Semikolon-getrennt, erste Zeile = Kopfzeile
    Pflichtfelder: name;land;lat;lng;text
    Optional:      datum
-   Duplikate (gleicher Name + Koordinaten) werden übersprungen.
+   Duplikate (gleicher Name + Text + Koordinaten) werden übersprungen.
 ═══════════════════════════════════════════════════════ */
 function csvImportieren(input) {
   const datei = input.files[0];
@@ -2033,9 +2033,11 @@ function csvImportieren(input) {
           continue;
         }
 
-        // Duplikat-Prüfung: gleicher Name UND ähnliche Koordinaten
+        // Duplikat-Prüfung: nur wirklich identische Einträge überspringen
+        // (gleicher Name + gleicher Text + gleiche Koordinaten)
         const doppelt = GLAESER.some(g =>
           g.name === name &&
+          g.text === text &&
           Math.abs(g.lat - lat) < 0.001 &&
           Math.abs(g.lng - lng) < 0.001
         );
