@@ -690,10 +690,10 @@
 ═══════════════════════════════════════════════════════ */
 const CONFIG = {
   // Passwort für den Admin-Bereich
-  passwort: "#Flugzeug24!",
+  passwort: "meinPasswort123",
 
   // Cloudinary – nach Registrierung ausfüllen:
-  cloudinary_cloud_name: "dpp3xfy5q",   // z.B. "abc123xyz"
+  cloudinary_cloud_name: "DEIN_CLOUD_NAME",   // z.B. "abc123xyz"
   cloudinary_upload_preset: "schnapsglas",     // Upload Preset Name
 };
 
@@ -1195,8 +1195,19 @@ function listeOeffnen() {
 
   setSheet(
     `📋 Meine Gläser (${GLAESER.length})`,
-    `<div class="glaeser-liste">${eintraege}</div>`,
+    `<div class="glaeser-liste">${eintraege}</div>
+     <!-- Versteckter File-Input für CSV-Import -->
+     <input type="file" id="csv-input" accept=".csv" style="display:none"
+            onchange="csvImportieren(this)">`,
     `<button class="btn-secondary" onclick="overlaySchliessen()">Schließen</button>
+     <button class="btn-secondary" style="color:var(--muted);font-size:0.72rem"
+             onclick="csvVorlageHerunterladen()" title="Leere CSV-Vorlage herunterladen">
+       📄 CSV-Vorlage
+     </button>
+     <button class="btn-secondary" style="color:var(--gold);border-color:var(--border-gold)"
+             onclick="document.getElementById('csv-input').click()">
+       📥 CSV importieren
+     </button>
      <button class="btn-primary" onclick="formularOeffnen()">＋ Neues Glas</button>`
   );
   overlayOeffnen();
@@ -1362,6 +1373,222 @@ function glasLoeschen(id) {
 
   // Liste neu laden (damit die Karte aktuell bleibt)
   listeOeffnen();
+}
+
+/* ═══════════════════════════════════════════════════════
+   CSV IMPORTIEREN
+   Format: UTF-8, Semikolon-getrennt, erste Zeile = Kopfzeile
+   Pflichtfelder: name;land;lat;lng;text
+   Optional:      datum
+   Duplikate (gleicher Name + Koordinaten) werden übersprungen.
+═══════════════════════════════════════════════════════ */
+function csvImportieren(input) {
+  const datei = input.files[0];
+  if (!datei) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      // BOM entfernen (Excel schreibt oft einen UTF-8 BOM an den Anfang)
+      const text  = e.target.result.replace(/^\uFEFF/, "");
+      const zeilen = text.split(/\r?\n/).filter(z => z.trim() !== "");
+
+      if (zeilen.length < 2) {
+        csvFeedback("Die CSV-Datei ist leer oder enthält nur die Kopfzeile.", "err");
+        return;
+      }
+
+      // ── Kopfzeile lesen ──
+      const kopf = csvZeileParsieren(zeilen[0]).map(s => s.toLowerCase().trim());
+
+      // Spalten-Indizes bestimmen
+      const idx = {
+        name:  kopf.indexOf("name"),
+        land:  kopf.indexOf("land"),
+        lat:   kopf.indexOf("lat"),
+        lng:   kopf.indexOf("lng"),
+        text:  kopf.indexOf("text"),
+        datum: kopf.indexOf("datum"),
+      };
+
+      // Pflichtfelder prüfen
+      const fehlend = ["name","land","lat","lng","text"].filter(k => idx[k] < 0);
+      if (fehlend.length > 0) {
+        csvFeedback(
+          `Fehlende Spalten: ${fehlend.join(", ")}. ` +
+          `Die Kopfzeile muss enthalten: name;land;lat;lng;text`,
+          "err"
+        );
+        return;
+      }
+
+      let hinzugefuegt = 0;
+      let uebersprungen = 0;
+      const fehler = [];
+
+      // ── Datenzeilen verarbeiten ──
+      for (let i = 1; i < zeilen.length; i++) {
+        const felder = csvZeileParsieren(zeilen[i]);
+
+        const name  = (felder[idx.name]  || "").trim();
+        const land  = (felder[idx.land]  || "").trim();
+        const lat   = parseFloat((felder[idx.lat] || "").replace(",", "."));
+        const lng   = parseFloat((felder[idx.lng] || "").replace(",", "."));
+        const text  = (felder[idx.text]  || "").trim();
+        const datum = idx.datum >= 0 ? (felder[idx.datum] || "").trim() : "";
+
+        // Zeile validieren
+        if (!name || !land || !text) {
+          fehler.push(`Zeile ${i + 1}: Name, Land oder Text fehlt.`);
+          uebersprungen++;
+          continue;
+        }
+        if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+          fehler.push(`Zeile ${i + 1} (${name}): Ungültige Koordinaten.`);
+          uebersprungen++;
+          continue;
+        }
+
+        // Duplikat-Prüfung: gleicher Name UND ähnliche Koordinaten
+        const doppelt = GLAESER.some(g =>
+          g.name === name &&
+          Math.abs(g.lat - lat) < 0.001 &&
+          Math.abs(g.lng - lng) < 0.001
+        );
+        if (doppelt) {
+          uebersprungen++;
+          continue;
+        }
+
+        // Datum-Format: Excel schreibt manchmal DD.MM.YYYY statt YYYY-MM-DD
+        let datumFormatiert = datum;
+        if (datum && datum.includes(".")) {
+          const teile = datum.split(".");
+          if (teile.length === 3) {
+            // DD.MM.YYYY → YYYY-MM-DD
+            datumFormatiert = `${teile[2].padStart(4,"0")}-${teile[1].padStart(2,"0")}-${teile[0].padStart(2,"0")}`;
+          }
+        }
+
+        // Glas hinzufügen
+        const glas = {
+          id:    naechsteId++,
+          name, land, lat, lng,
+          foto:  null,
+          text,
+          datum: datumFormatiert || null
+        };
+        GLAESER.push(glas);
+
+        // Marker auf Karte setzen
+        const m = L.marker([lat, lng], { icon: markerIcon() })
+          .addTo(map)
+          .bindPopup(popupHTML(glas), { maxWidth: 280, minWidth: 280 });
+        markerMap[glas.id] = m;
+
+        hinzugefuegt++;
+      }
+
+      // Zähler aktualisieren
+      const n = GLAESER.length;
+      document.getElementById("zaehler").textContent = n + (n === 1 ? " Glas" : " Gläser");
+
+      // Ergebnis-Panel zeigen
+      input.value = ""; // File-Input zurücksetzen
+      csvErgebnis(hinzugefuegt, uebersprungen, fehler);
+
+    } catch(err) {
+      csvFeedback("Fehler beim Lesen der Datei: " + err.message, "err");
+    }
+  };
+
+  // UTF-8 lesen (wichtig für Umlaute!)
+  reader.readAsText(datei, "UTF-8");
+}
+
+/* ── CSV-Zeile korrekt parsen (mit Anführungszeichen-Unterstützung) ── */
+function csvZeileParsieren(zeile) {
+  const felder = [];
+  let feld = "";
+  let inAnfuehrung = false;
+
+  for (let i = 0; i < zeile.length; i++) {
+    const c = zeile[i];
+    if (c === '"') {
+      if (inAnfuehrung && zeile[i + 1] === '"') {
+        // Doppeltes Anführungszeichen = ein echtes
+        feld += '"'; i++;
+      } else {
+        inAnfuehrung = !inAnfuehrung;
+      }
+    } else if (c === ";" && !inAnfuehrung) {
+      felder.push(feld);
+      feld = "";
+    } else {
+      feld += c;
+    }
+  }
+  felder.push(feld);
+  return felder;
+}
+
+/* ── Ergebnis-Panel nach dem Import ── */
+function csvErgebnis(hinzugefuegt, uebersprungen, fehler) {
+  const fehlerListe = fehler.length > 0
+    ? `<div style="margin-top:12px;">
+        <div class="form-section" style="margin-top:0">⚠ Hinweise</div>
+        <div style="font-size:0.75rem;color:var(--muted);line-height:1.8;">
+          ${fehler.map(f => `• ${esc(f)}`).join("<br>")}
+        </div>
+      </div>`
+    : "";
+
+  setSheet(
+    "✓ CSV importiert",
+    `<div style="text-align:center;padding:16px 0 20px;">
+      <div style="font-size:3rem;margin-bottom:12px;">📥</div>
+      <p style="color:var(--hell);font-size:1rem;margin-bottom:6px;">
+        <strong>${hinzugefuegt}</strong> Glas/Gläser erfolgreich importiert
+      </p>
+      ${uebersprungen > 0
+        ? `<p style="color:var(--muted);font-size:0.82rem;">${uebersprungen} Zeile(n) übersprungen (ungültig oder doppelt)</p>`
+        : `<p style="color:var(--green);font-size:0.82rem;">Alle Zeilen verarbeitet ✓</p>`}
+    </div>
+    ${fehlerListe}
+    <div style="margin-top:14px;">
+      <div class="form-section" style="margin-top:0">💾 Jetzt speichern</div>
+      <p style="color:var(--muted);font-size:0.79rem;line-height:1.6;">
+        Die neuen Gläser sind auf der Karte sichtbar. Lade die
+        <code style="color:var(--gold)">data.js</code> herunter und
+        lade sie auf GitHub hoch damit alles dauerhaft gespeichert wird.
+      </p>
+    </div>`,
+    `<button class="btn-secondary" onclick="listeOeffnen()">← Zurück zur Liste</button>
+     <button class="btn-primary" style="background:var(--green,#4A9460)" onclick="dataJsHerunterladen()">⬇ data.js herunterladen</button>`
+  );
+  overlayOeffnen();
+}
+
+/* ── Kurze Fehlermeldung im laufenden Panel ── */
+function csvFeedback(text, typ) {
+  // Kein eigenes Feedback-Element in der Liste – Alert als Fallback
+  alert((typ === "err" ? "⚠ " : "✓ ") + text);
+}
+
+/* ── Vorlage-CSV herunterladen (Hilfsfunktion, falls nötig) ── */
+function csvVorlageHerunterladen() {
+  const inhalt =
+    "name;land;lat;lng;text;datum\n" +
+    "Berlin, Deutschland;Deutschland;52.52;13.405;Erstes Glas meiner Sammlung – Souvenir vom Stadtbummel.;2024-06-15\n" +
+    "Wien, Österreich;Österreich;48.2082;16.3738;Schönes Glasl vom Naschmarkt.;2024-08-20\n";
+
+  const blob = new Blob(["\uFEFF" + inhalt], { type: "text/csv;charset=utf-8;" });
+  const url  = URL.createObjectURL(blob);
+  const a    = Object.assign(document.createElement("a"), {
+    href: url, download: "schnapsglas-vorlage.csv"
+  });
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 /* ═══════════════════════════════════════════════════════
