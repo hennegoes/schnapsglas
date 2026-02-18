@@ -113,7 +113,7 @@
        CUSTOM MARKER
     ══════════════════════════════════════════ */
     .marker-pin {
-      width: 32px; height: 32px;
+      width: 40px; height: 40px;
       border-radius: 50% 50% 50% 0;
       transform: rotate(-45deg);
       background: var(--gold);
@@ -122,16 +122,51 @@
       display: flex; align-items: center; justify-content: center;
       transition: all 0.2s;
       cursor: pointer;
+      overflow: hidden;
     }
     .marker-pin:hover {
-      background: var(--gold-hell);
       transform: rotate(-45deg) scale(1.15);
       box-shadow: 0 5px 20px rgba(200,134,10,0.8);
     }
     .marker-pin .pin-inner {
       transform: rotate(45deg);
-      font-size: 14px;
+      font-size: 16px;
       margin-top: -2px; margin-left: -1px;
+    }
+
+    /* Foto-Pin: Bild füllt den Pin, mittig zentriert */
+    .marker-pin .pin-foto {
+      transform: rotate(45deg);
+      width: 44px; height: 44px;
+      object-fit: cover;
+      object-position: center;
+      display: block;
+      border-radius: 1px;
+    }
+
+    /* Farb-Varianten */
+    .marker-pin.gekauft {
+      background: #3B82F6;
+      border-color: #BFDBFE;
+      box-shadow: 0 3px 12px rgba(59,130,246,0.6);
+    }
+    .marker-pin.gekauft:hover  { box-shadow: 0 5px 20px rgba(59,130,246,0.8); }
+    .marker-pin.geschenkt {
+      background: #EA580C;
+      border-color: #FED7AA;
+      box-shadow: 0 3px 12px rgba(234,88,12,0.6);
+    }
+    .marker-pin.geschenkt:hover { box-shadow: 0 5px 20px rgba(234,88,12,0.8); }
+
+    /* Foto-Pin bekommt weißen Rahmen unabhängig von Kategorie */
+    .marker-pin.hat-foto {
+      border: 2.5px solid #fff;
+      box-shadow: 0 3px 14px rgba(0,0,0,0.5);
+      padding: 0;
+    }
+    .marker-pin.hat-foto:hover {
+      transform: rotate(-45deg) scale(1.15);
+      box-shadow: 0 5px 22px rgba(0,0,0,0.6);
     }
 
     /* ══════════════════════════════════════════
@@ -1004,14 +1039,28 @@ L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
 /* ═══════════════════════════════════════════════════════
    MARKER ICON
 ═══════════════════════════════════════════════════════ */
-function markerIcon(kategorie) {
+function markerIcon(kategorie, foto) {
   const cls = kategorie === "gekauft" ? "gekauft" : kategorie === "geschenkt" ? "geschenkt" : "";
+
+  if (foto) {
+    // Foto-Pin: Bild füllt den Pin, rotiert damit es aufrecht steht
+    return L.divIcon({
+      className: "",
+      html: `<div class="marker-pin hat-foto ${cls}">
+               <img class="pin-foto" src="${foto}" alt="">
+             </div>`,
+      iconSize:    [40, 40],
+      iconAnchor:  [20, 40],
+      popupAnchor: [0, -44]
+    });
+  }
+
   return L.divIcon({
     className: "",
     html: `<div class="marker-pin ${cls}"><div class="pin-inner">🥃</div></div>`,
-    iconSize:    [32, 32],
-    iconAnchor:  [16, 32],
-    popupAnchor: [0, -36]
+    iconSize:    [40, 40],
+    iconAnchor:  [20, 40],
+    popupAnchor: [0, -44]
   });
 }
 
@@ -1066,8 +1115,9 @@ function alleGlaeserLaden() {
   // Pro Gruppe einen Marker setzen
   Object.values(gruppen).forEach(gruppe => {
     const erstesGlas  = gruppe[0];
-    const kat         = gruppe.length === 1 ? erstesGlas.kategorie : null; // bei mehreren: kein Farbmarker
-    const m = L.marker([erstesGlas.lat, erstesGlas.lng], { icon: markerIcon(kat) })
+    const kat  = gruppe.length === 1 ? erstesGlas.kategorie : null;
+    const foto = erstesGlas.foto || null;
+    const m = L.marker([erstesGlas.lat, erstesGlas.lng], { icon: markerIcon(kat, foto) })
       .addTo(map)
       .bindPopup(gruppenPopupHTML(gruppe, 0), { maxWidth: 300, minWidth: 300 });
 
@@ -2174,9 +2224,9 @@ function markerAktualisieren(lat, lng) {
 
   if (gruppe.length === 0) return;
 
-  // Marker-Farbe: bei Einzelglas Kategorie-Farbe, bei Gruppe neutral (gold)
-  const kat = gruppe.length === 1 ? gruppe[0].kategorie : null;
-  const m   = L.marker([lat, lng], { icon: markerIcon(kat) })
+  const kat  = gruppe.length === 1 ? gruppe[0].kategorie : null;
+  const foto = gruppe[0].foto || null;
+  const m   = L.marker([lat, lng], { icon: markerIcon(kat, foto) })
     .addTo(map)
     .bindPopup(gruppenPopupHTML(gruppe, 0), { maxWidth: 300, minWidth: 300 });
 
