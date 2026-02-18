@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Setup-Anleitung – Schnapsglas-Karte</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D0F18; --surface: #161925; --surface2: #1E2235;
+    --border: #252A3D; --amber: #F5A623; --green: #4EC97D;
+    --blue: #5B9BEF; --text: #CDD6F4; --muted: #6C7086; --heading: #fff;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Sora',sans-serif; background:var(--bg); color:var(--text); line-height:1.7; }
+
+  .topbar {
+    background:#090B13; border-bottom:1px solid var(--border);
+    padding:14px 28px; position:sticky; top:0; z-index:100;
+    display:flex; align-items:center; gap:14px;
+  }
+  .topbar-title { font-weight:700; color:var(--amber); font-size:0.9rem; }
+
+  .content { max-width:780px; margin:0 auto; padding:48px 24px 100px; }
+
+  h1 { font-size:clamp(1.6rem,3vw,2.2rem); color:var(--heading); margin-bottom:10px; }
+  .intro { color:var(--muted); font-size:0.92rem; margin-bottom:56px; max-width:540px; }
+
+  /* Part */
+  .part { margin-bottom:72px; }
+  .part-badge {
+    display:inline-flex; align-items:center; gap:8px;
+    background:rgba(245,166,35,0.1); border:1px solid rgba(245,166,35,0.3);
+    color:var(--amber); font-size:0.68rem; letter-spacing:2px;
+    text-transform:uppercase; padding:4px 12px; border-radius:20px; margin-bottom:14px;
+    font-family:'JetBrains Mono',monospace;
+  }
+  .part h2 { font-size:1.4rem; color:var(--heading); margin-bottom:8px; }
+  .part > p { color:var(--muted); font-size:0.9rem; margin-bottom:28px; }
+
+  /* Steps */
+  .steps { list-style:none; }
+  .steps li {
+    display:flex; gap:16px; margin-bottom:20px;
+    font-size:0.9rem; align-items:flex-start;
+  }
+  .step-n {
+    background:var(--surface2); border:1px solid var(--border);
+    color:var(--amber); font-family:'JetBrains Mono',monospace;
+    font-size:0.68rem; font-weight:600; width:28px; height:28px;
+    border-radius:6px; display:flex; align-items:center; justify-content:center;
+    flex-shrink:0; margin-top:1px;
+  }
+  .steps li p { color:var(--text); }
+  .steps li strong { color:var(--heading); }
+
+  /* Code */
+  .code-wrap { position:relative; margin:12px 0; }
+  .code-label {
+    position:absolute; top:-10px; left:14px;
+    background:var(--surface2); border:1px solid var(--border);
+    font-family:'JetBrains Mono',monospace; font-size:0.61rem;
+    color:var(--muted); padding:2px 8px; border-radius:4px;
+    letter-spacing:1px; text-transform:uppercase;
+  }
+  .copy-btn {
+    position:absolute; top:10px; right:10px;
+    background:var(--surface2); border:1px solid var(--border);
+    color:var(--muted); font-size:0.68rem; padding:4px 10px;
+    border-radius:4px; cursor:pointer; font-family:'Sora',sans-serif; transition:all 0.2s;
+  }
+  .copy-btn:hover { color:var(--text); border-color:var(--amber); }
+  .copy-btn.copied { color:var(--green); border-color:var(--green); }
+  pre {
+    background:#060810; border:1px solid var(--border); border-radius:10px;
+    padding:20px; overflow-x:auto; font-family:'JetBrains Mono',monospace;
+    font-size:0.8rem; line-height:1.85; color:#CDD6F4; white-space:pre;
+  }
+
+  /* Callout */
+  .callout {
+    border-radius:8px; padding:12px 16px; font-size:0.85rem;
+    margin:14px 0; display:flex; gap:10px; align-items:flex-start; line-height:1.6;
+  }
+  .callout.tip  { background:rgba(78,201,125,0.07); border:1px solid rgba(78,201,125,0.25); color:#9FD8B5; }
+  .callout.info { background:rgba(91,155,239,0.07); border:1px solid rgba(91,155,239,0.25); color:#A8BFF0; }
+  .callout.warn { background:rgba(245,166,35,0.07); border:1px solid rgba(245,166,35,0.25); color:#E8C87A; }
+  .callout strong { display:block; margin-bottom:2px; }
+  .callout.tip  strong { color:var(--green); }
+  .callout.info strong { color:var(--blue); }
+  .callout.warn strong { color:var(--amber); }
+
+  hr { border:none; border-top:1px solid var(--border); margin:56px 0; }
+
+  code {
+    background:var(--surface2); border:1px solid var(--border);
+    font-family:'JetBrains Mono',monospace; font-size:0.82em;
+    padding:1px 6px; border-radius:4px; color:var(--amber);
+  }
+
+  .done-box {
+    background:linear-gradient(135deg,rgba(78,201,125,0.1),rgba(78,201,125,0.04));
+    border:1px solid rgba(78,201,125,0.3); border-radius:12px;
+    padding:28px 32px; text-align:center; margin-top:56px;
+  }
+  .done-box h2 { color:var(--green); font-size:1.4rem; margin-bottom:8px; }
+  .done-box p  { color:var(--muted); font-size:0.88rem; }
+
+  kbd {
+    background:var(--surface2); border:1px solid var(--border);
+    border-bottom:2px solid #3A3E52; border-radius:4px;
+    padding:2px 7px; font-family:'JetBrains Mono',monospace;
+    font-size:0.78rem; color:var(--text);
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-title">🥃 Setup-Anleitung</div>
+  <div style="font-size:0.78rem;color:var(--muted)">Cloudinary + GitHub Pages</div>
+</div>
+
+<div class="content">
+
+  <h1>Deine Karte einrichten</h1>
+  <p class="intro">
+    Zwei Dienste, beide kostenlos. Cloudinary speichert deine Fotos.
+    GitHub Pages macht deine Karte im Internet erreichbar.
+    Einmalig ca. 20 Minuten Aufwand — dann läuft alles automatisch.
+  </p>
+
+  <!-- ════ TEIL 1: CLOUDINARY ════ -->
+  <div class="part">
+    <div class="part-badge">Teil 1 · Fotos</div>
+    <h2>☁ Cloudinary einrichten</h2>
+    <p>Cloudinary ist ein kostenloser Bild-Hosting-Dienst. Wenn du auf deiner Karte ein Foto hinzufügst, wird es automatisch dort hochgeladen.</p>
+
+    <ul class="steps">
+      <li>
+        <span class="step-n">1</span>
+        <p>Gehe auf <strong>cloudinary.com</strong> und erstelle ein kostenloses Konto (kostenlos bis 25 GB).</p>
+      </li>
+      <li>
+        <span class="step-n">2</span>
+        <p>Nach dem Login siehst du das Dashboard. Notiere deinen <strong>Cloud Name</strong> — er steht oben links, z.B. <code>abc123xyz</code>.</p>
+      </li>
+      <li>
+        <span class="step-n">3</span>
+        <p>Klicke links auf <strong>Settings → Upload</strong>.</p>
+      </li>
+      <li>
+        <span class="step-n">4</span>
+        <p>Scrolle runter zu <strong>Upload presets</strong> → klicke <strong>Add upload preset</strong>.</p>
+      </li>
+      <li>
+        <span class="step-n">5</span>
+        <p>Trage als Preset Name <code>schnapsglas</code> ein. Stelle <strong>Signing Mode</strong> auf <strong>Unsigned</strong>. Speichern.</p>
+      </li>
+      <li>
+        <span class="step-n">6</span>
+        <p>Öffne jetzt deine <code>index.html</code> in VS Code. Suche diese Stelle und trage deinen Cloud Name ein:</p>
+      </li>
+    </ul>
+
+    <div class="code-wrap">
+      <div class="code-label">index.html – CONFIG anpassen</div>
+      <button class="copy-btn" onclick="copyCode(this)">Kopieren</button>
+      <pre>const CONFIG = {
+  passwort: "meinPasswort123",   <span style="color:#4A5060">// ← Hier dein eigenes Passwort!</span>
+
+  cloudinary_cloud_name:    "abc123xyz",   <span style="color:#4A5060">// ← Dein Cloud Name</span>
+  cloudinary_upload_preset: "schnapsglas", <span style="color:#4A5060">// ← So lassen (falls du es so genannt hast)</span>
+};</pre>
+    </div>
+
+    <div class="callout tip">
+      <span>✅</span>
+      <div><strong>Test</strong> Öffne index.html lokal → Klicke ⚙ → gib dein Passwort ein → versuche ein Glas mit Foto hinzuzufügen. Wenn kein Fehler erscheint, ist Cloudinary korrekt eingerichtet.</div>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- ════ TEIL 2: GITHUB PAGES ════ -->
+  <div class="part">
+    <div class="part-badge">Teil 2 · Hosting</div>
+    <h2>🐙 GitHub Pages einrichten</h2>
+    <p>GitHub Pages hostet deine Karte kostenlos. Deine URL wird z.B. <code>https://DEINNAME.github.io/schnapsglas</code>.</p>
+
+    <ul class="steps">
+      <li>
+        <span class="step-n">1</span>
+        <p>Gehe auf <strong>github.com</strong> und erstelle ein kostenloses Konto falls noch nicht vorhanden.</p>
+      </li>
+      <li>
+        <span class="step-n">2</span>
+        <p>Klicke oben rechts auf <strong>＋ → New repository</strong>. Name: <code>schnapsglas</code>, Sichtbarkeit: <strong>Public</strong> (für GitHub Pages nötig). Erstellen.</p>
+      </li>
+      <li>
+        <span class="step-n">3</span>
+        <p>Klicke auf <strong>uploading an existing file</strong> und lade diese drei Dateien hoch:</p>
+      </li>
+    </ul>
+
+    <div class="code-wrap">
+      <div class="code-label">Dein Projektordner</div>
+      <pre>📁 schnapsglas/
+  ├── index.html    ← Die Karte
+  ├── data.js       ← Deine Glasdaten
+  └── setup.html    ← Diese Anleitung (optional)</pre>
+    </div>
+
+    <ul class="steps">
+      <li>
+        <span class="step-n">4</span>
+        <p>Klicke auf <strong>Commit changes</strong> (grüner Button unten).</p>
+      </li>
+      <li>
+        <span class="step-n">5</span>
+        <p>Gehe zu <strong>Settings → Pages</strong>. Unter <em>Source</em>: Branch <code>main</code> auswählen → <strong>Save</strong>.</p>
+      </li>
+      <li>
+        <span class="step-n">6</span>
+        <p>Nach 1–2 Minuten erscheint deine URL. Sie lautet:<br>
+        <code>https://DEINNAME.github.io/schnapsglas</code></p>
+      </li>
+    </ul>
+
+    <div class="callout tip">
+      <span>📱</span>
+      <div><strong>Auf dem Handy speichern</strong> Öffne die URL auf deinem iPhone/Android → Teilen → „Zum Home-Bildschirm" → Die Karte erscheint als App-Icon!</div>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- ════ TEIL 3: WORKFLOW ════ -->
+  <div class="part">
+    <div class="part-badge">Teil 3 · Täglicher Workflow</div>
+    <h2>🔄 So fügst du unterwegs ein Glas hinzu</h2>
+    <p>Nach dem einmaligen Setup funktioniert das so — auch vom Handy:</p>
+
+    <ul class="steps">
+      <li>
+        <span class="step-n">1</span>
+        <p>Öffne <code>github.io/schnapsglas</code> auf dem Handy.</p>
+      </li>
+      <li>
+        <span class="step-n">2</span>
+        <p>Tippe auf den <strong>⚙ Button</strong> oben rechts → Passwort eingeben.</p>
+      </li>
+      <li>
+        <span class="step-n">3</span>
+        <p>Tippe auf <strong>＋ Glas hinzufügen</strong> → Foto aufnehmen, Ort und Geschichte eintragen → <strong>Pinnen & Speichern</strong>.</p>
+      </li>
+      <li>
+        <span class="step-n">4</span>
+        <p>Der Pin erscheint sofort auf der Karte. Danach erscheint automatisch deine aktualisierte <code>data.js</code>.</p>
+      </li>
+      <li>
+        <span class="step-n">5</span>
+        <p>Tippe <strong>In Zwischenablage kopieren</strong>. Gehe auf github.com → öffne <code>data.js</code> → Stift-Symbol (Bearbeiten) → alles löschen → einfügen → <strong>Commit changes</strong>.</p>
+      </li>
+      <li>
+        <span class="step-n">6</span>
+        <p>Nach ~1 Minute ist der neue Pin für alle sichtbar, die deine URL aufrufen. ✓</p>
+      </li>
+    </ul>
+
+    <div class="callout warn">
+      <span>⚠️</span>
+      <div><strong>Wichtig</strong> Ohne den GitHub-Schritt (Schritt 5–6) ist der Pin nur in deiner aktuellen Browser-Sitzung sichtbar. Beim nächsten Öffnen der Seite wäre er wieder weg — erst nach dem GitHub-Update bleibt er dauerhaft.</div>
+    </div>
+
+    <div class="callout info">
+      <span>💡</span>
+      <div><strong>Tipp: GitHub Mobile App</strong> Lade die kostenlose <strong>GitHub Mobile</strong> App herunter. Damit kannst du <code>data.js</code> direkt vom Handy aktualisieren, ohne Browser-Umwege.</div>
+    </div>
+  </div>
+
+  <div class="done-box">
+    <h2>🎉 Alles eingerichtet!</h2>
+    <p>Deine Karte läuft, Fotos werden in der Cloud gespeichert, und jeder mit dem Link kann deine Sammlung bewundern.</p>
+  </div>
+
+</div>
+
+<script>
+function copyCode(btn) {
+  const pre = btn.parentElement.querySelector('pre');
+  navigator.clipboard.writeText(pre.innerText).then(() => {
+    btn.textContent = '✓ Kopiert!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Kopieren'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Schnapsgläser aus aller Welt</title>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+
+  <style>
+    /* ══════════════════════════════════════════
+       VARIABLEN & RESET
+    ══════════════════════════════════════════ */
+    :root {
+      --gold:        #C8860A;
+      --gold-hell:   #E8A520;
+      --bg:          #0F0A04;
+      --panel:       #1A1208;
+      --panel2:      #221A0A;
+      --border:      rgba(200,134,10,0.22);
+      --border-gold: rgba(200,134,10,0.55);
+      --hell:        #F0E6CC;
+      --muted:       #7A6540;
+      --text:        #CDB98A;
+      --green:       #4A9460;
+      --red:         #944A4A;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      height: 100%;
+      font-family: 'Lora', Georgia, serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+    }
+
+    /* ══════════════════════════════════════════
+       HEADER
+    ══════════════════════════════════════════ */
+    header {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 54px;
+      background: linear-gradient(135deg, #0F0A04 0%, #1E1408 100%);
+      border-bottom: 1px solid var(--border-gold);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      z-index: 900;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.7);
+    }
+
+    .header-left { display: flex; align-items: center; gap: 10px; }
+
+    .header-logo { font-size: 24px; }
+
+    .header-titles h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(0.85rem, 3vw, 1.05rem);
+      color: var(--gold-hell);
+      line-height: 1.1;
+    }
+    .header-titles p {
+      font-size: 0.58rem;
+      color: var(--muted);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .header-right { display: flex; align-items: center; gap: 8px; }
+
+    #zaehler {
+      background: rgba(200,134,10,0.1);
+      border: 1px solid var(--border-gold);
+      border-radius: 20px;
+      color: var(--gold-hell);
+      padding: 3px 12px;
+      font-size: 0.72rem;
+    }
+
+    /* Admin-Button */
+    #admin-btn {
+      width: 36px; height: 36px;
+      background: rgba(200,134,10,0.12);
+      border: 1px solid var(--border-gold);
+      border-radius: 50%;
+      color: var(--gold);
+      font-size: 16px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    #admin-btn:hover { background: rgba(200,134,10,0.25); transform: rotate(15deg); }
+
+    /* ══════════════════════════════════════════
+       KARTE
+    ══════════════════════════════════════════ */
+    #map {
+      position: fixed;
+      top: 54px; left: 0; right: 0; bottom: 0;
+      z-index: 1;
+    }
+
+    /* Leaflet-Kacheln leicht abdunkeln */
+    .leaflet-tile { filter: brightness(0.88) saturate(0.85); }
+
+    /* ══════════════════════════════════════════
+       CUSTOM MARKER
+    ══════════════════════════════════════════ */
+    .marker-pin {
+      width: 32px; height: 32px;
+      border-radius: 50% 50% 50% 0;
+      transform: rotate(-45deg);
+      background: var(--gold);
+      border: 2px solid var(--hell);
+      box-shadow: 0 3px 12px rgba(200,134,10,0.6);
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    .marker-pin:hover {
+      background: var(--gold-hell);
+      transform: rotate(-45deg) scale(1.15);
+      box-shadow: 0 5px 20px rgba(200,134,10,0.8);
+    }
+    .marker-pin .pin-inner {
+      transform: rotate(45deg);
+      font-size: 14px;
+      margin-top: -2px; margin-left: -1px;
+    }
+
+    /* ══════════════════════════════════════════
+       POPUP
+    ══════════════════════════════════════════ */
+    .leaflet-popup-content-wrapper {
+      background: var(--panel);
+      border: 1px solid var(--gold);
+      border-radius: 16px;
+      padding: 0;
+      overflow: hidden;
+      box-shadow: 0 12px 48px rgba(0,0,0,0.8);
+    }
+    .leaflet-popup-tip { background: var(--gold); }
+    .leaflet-popup-content { margin: 0 !important; width: 280px !important; }
+    .leaflet-popup-close-button {
+      color: var(--gold) !important;
+      font-size: 20px !important;
+      top: 8px !important; right: 10px !important;
+      z-index: 10;
+    }
+
+    .popup-img {
+      width: 100%; height: 168px;
+      object-fit: cover; display: block;
+    }
+    .popup-no-img {
+      width: 100%; height: 140px;
+      background: linear-gradient(135deg, #2D1F05 0%, #5A3A10 100%);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 52px;
+    }
+    .popup-body { padding: 14px 16px 18px; }
+    .popup-land {
+      font-size: 0.62rem; color: var(--gold);
+      letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 4px;
+    }
+    .popup-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.05rem; color: var(--hell);
+      line-height: 1.3; margin-bottom: 4px;
+    }
+    .popup-datum { font-size: 0.68rem; color: var(--muted); margin-bottom: 10px; }
+    .popup-text {
+      font-size: 0.81rem; color: #C4B090;
+      line-height: 1.65; font-style: italic;
+      border-top: 1px solid var(--border);
+      padding-top: 9px;
+    }
+
+    /* ══════════════════════════════════════════
+       OVERLAY (Passwort + Admin-Panel)
+    ══════════════════════════════════════════ */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.82);
+      backdrop-filter: blur(6px);
+      z-index: 1000;
+      display: flex;
+      align-items: flex-end;  /* von unten einschieben auf Mobile */
+      justify-content: center;
+      padding: 0;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s;
+    }
+    .overlay.visible {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    /* Sheet-Container */
+    .sheet {
+      background: var(--panel);
+      border: 1px solid var(--border-gold);
+      border-bottom: none;
+      border-radius: 24px 24px 0 0;
+      width: 100%;
+      max-width: 520px;
+      max-height: 92vh;
+      display: flex;
+      flex-direction: column;
+      transform: translateY(100%);
+      transition: transform 0.35s cubic-bezier(0.32,0.72,0,1);
+      overflow: hidden;
+    }
+    .overlay.visible .sheet {
+      transform: translateY(0);
+    }
+
+    /* Sheet Handle */
+    .sheet-handle {
+      width: 40px; height: 4px;
+      background: var(--border-gold);
+      border-radius: 2px;
+      margin: 12px auto 0;
+      flex-shrink: 0;
+    }
+
+    /* Sheet Header */
+    .sheet-header {
+      padding: 14px 20px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .sheet-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.1rem;
+      color: var(--gold-hell);
+    }
+    .sheet-close {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 16px;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s;
+    }
+    .sheet-close:hover { color: var(--hell); border-color: var(--border-gold); }
+
+    /* Sheet Body scrollbar */
+    .sheet-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 18px 20px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .sheet-body::-webkit-scrollbar { width: 3px; }
+    .sheet-body::-webkit-scrollbar-thumb { background: var(--border-gold); border-radius: 3px; }
+
+    /* ── Passwort-Panel ── */
+    #pw-panel { text-align: center; padding: 24px 20px 32px; }
+    #pw-panel p { font-size: 0.88rem; color: var(--muted); margin-bottom: 20px; line-height: 1.6; }
+
+    /* ── Formular ── */
+    .form-section {
+      font-size: 0.62rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 10px;
+      margin-top: 18px;
+      padding-bottom: 5px;
+      border-bottom: 1px solid var(--border);
+    }
+    .form-section:first-child { margin-top: 0; }
+
+    .form-group { margin-bottom: 12px; }
+
+    label {
+      display: block;
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    .req { color: var(--gold); }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="password"],
+    input[type="date"],
+    textarea,
+    select {
+      width: 100%;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 10px 13px;
+      font-family: 'Lora', serif;
+      font-size: 0.85rem;
+      color: var(--hell);
+      outline: none;
+      transition: border-color 0.15s, background 0.15s;
+      -webkit-appearance: none;
+    }
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--gold);
+      background: rgba(200,134,10,0.06);
+    }
+    input::placeholder, textarea::placeholder { color: var(--muted); opacity: 0.65; }
+    textarea { resize: vertical; min-height: 80px; line-height: 1.6; }
+
+    /* Foto-Upload */
+    .foto-upload-area {
+      border: 2px dashed var(--border-gold);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      background: rgba(200,134,10,0.03);
+    }
+    .foto-upload-area:hover { background: rgba(200,134,10,0.07); border-color: var(--gold); }
+    .foto-upload-area.has-foto { padding: 0; border-style: solid; overflow: hidden; }
+
+    #foto-input { display: none; }
+
+    .foto-preview {
+      width: 100%; height: 180px;
+      object-fit: cover; display: block;
+      border-radius: 10px;
+    }
+
+    .foto-placeholder { color: var(--muted); }
+    .foto-placeholder .icon { font-size: 32px; margin-bottom: 8px; display: block; }
+    .foto-placeholder p { font-size: 0.8rem; line-height: 1.5; }
+    .foto-placeholder span { font-size: 0.68rem; color: var(--muted); opacity: 0.6; display: block; margin-top: 4px; }
+
+    .foto-change {
+      position: absolute;
+      bottom: 8px; right: 8px;
+      background: rgba(0,0,0,0.7);
+      border: 1px solid var(--border-gold);
+      border-radius: 6px;
+      color: var(--gold);
+      font-size: 0.7rem;
+      padding: 4px 10px;
+      cursor: pointer;
+    }
+
+    /* Koordinaten */
+    .coord-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .coord-hint {
+      font-size: 0.68rem; color: var(--muted);
+      margin-top: 6px; line-height: 1.5;
+    }
+    .coord-hint a { color: var(--gold); text-decoration: none; }
+    .coord-hint a:hover { text-decoration: underline; }
+
+    /* ── Feedback ── */
+    .feedback-msg {
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 0.78rem;
+      margin-bottom: 10px;
+      display: none;
+      line-height: 1.4;
+    }
+    .feedback-msg.ok  { display: block; background: rgba(74,148,96,0.12);  border: 1px solid rgba(74,148,96,0.4);  color: #8FD4A8; }
+    .feedback-msg.err { display: block; background: rgba(148,74,74,0.12);  border: 1px solid rgba(148,74,74,0.4);  color: #D4A08F; }
+
+    /* Cloudinary-Fortschritt */
+    .upload-progress {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.78rem;
+      color: var(--gold);
+      margin-bottom: 10px;
+    }
+    .upload-progress.active { display: flex; }
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid var(--border);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Sheet Footer ── */
+    .sheet-footer {
+      padding: 14px 20px;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      flex: 1;
+      background: var(--gold);
+      color: var(--bg);
+      border: none;
+      border-radius: 10px;
+      padding: 13px;
+      font-family: 'Lora', serif;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-primary:hover { background: var(--gold-hell); }
+    .btn-primary:active { transform: scale(0.98); }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 10px;
+      padding: 13px 16px;
+      font-family: 'Lora', serif;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-secondary:hover { border-color: var(--border-gold); color: var(--text); }
+
+    /* ══════════════════════════════════════════
+       EXPORT BUTTON (floating, unten links)
+    ══════════════════════════════════════════ */
+    #export-btn {
+      position: fixed;
+      bottom: 24px;
+      right: 16px;
+      z-index: 800;
+      background: var(--panel);
+      border: 1px solid var(--border-gold);
+      border-radius: 12px;
+      color: var(--gold);
+      padding: 10px 16px;
+      font-family: 'Lora', serif;
+      font-size: 0.76rem;
+      cursor: pointer;
+      display: none;       /* nur sichtbar wenn eingeloggt */
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      transition: all 0.2s;
+    }
+    #export-btn:hover { background: rgba(200,134,10,0.12); transform: translateY(-2px); }
+
+    /* ══════════════════════════════════════════
+       MOBILE FAB (Floating Action Button)
+    ══════════════════════════════════════════ */
+    #fab {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 800;
+      background: var(--gold);
+      color: var(--bg);
+      border: none;
+      border-radius: 28px;
+      padding: 14px 28px;
+      font-family: 'Playfair Display', serif;
+      font-size: 0.95rem;
+      cursor: pointer;
+      box-shadow: 0 6px 28px rgba(200,134,10,0.55);
+      display: none;   /* nur nach Login sichtbar */
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+      -webkit-tap-highlight-color: transparent;
+      white-space: nowrap;
+    }
+    #fab:hover { background: var(--gold-hell); transform: translateX(-50%) translateY(-2px); }
+    #fab:active { transform: translateX(-50%) scale(0.97); }
+
+    /* ══════════════════════════════════════════
+       CODE-ANZEIGE (nach Export)
+    ══════════════════════════════════════════ */
+    .code-box {
+      background: #080604;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.72rem;
+      color: #C8B890;
+      max-height: 220px;
+      overflow-y: auto;
+      white-space: pre;
+      line-height: 1.7;
+      margin-top: 12px;
+    }
+
+    .copy-btn {
+      width: 100%;
+      background: transparent;
+      border: 1px solid var(--border-gold);
+      border-radius: 8px;
+      color: var(--gold);
+      padding: 8px;
+      font-family: 'Lora', serif;
+      font-size: 0.78rem;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: all 0.15s;
+    }
+    .copy-btn:hover { background: rgba(200,134,10,0.08); }
+    .copy-btn.copied { color: var(--green); border-color: var(--green); }
+  </style>
+</head>
+<body>
+
+<!-- ══ HEADER ══ -->
+<header>
+  <div class="header-left">
+    <div class="header-logo">🥃</div>
+    <div class="header-titles">
+      <h1>Schnapsgläser aus aller Welt</h1>
+      <p>Meine persönliche Sammlung</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <span id="zaehler">0 Gläser</span>
+    <button id="admin-btn" onclick="adminOeffnen()" title="Glas hinzufügen / Admin">⚙</button>
+  </div>
+</header>
+
+<!-- ══ KARTE ══ -->
+<div id="map"></div>
+
+<!-- ══ FAB (nach Login) ══ -->
+<button id="fab" onclick="formularOeffnen()">
+  <span>＋</span> Glas hinzufügen
+</button>
+
+<!-- ══ EXPORT BUTTON (nach Login) ══ -->
+<button id="export-btn" onclick="exportPanel()">
+  ⬇ data.js exportieren
+</button>
+
+<!-- ══════════════════════════════════════════
+     OVERLAY: Alles läuft durch diesen Container
+══════════════════════════════════════════ -->
+<div class="overlay" id="overlay" onclick="overlayKlick(event)">
+  <div class="sheet" id="sheet">
+    <div class="sheet-handle"></div>
+
+    <!-- SHEET HEADER -->
+    <div class="sheet-header">
+      <div class="sheet-title" id="sheet-title">Admin-Bereich</div>
+      <button class="sheet-close" onclick="overlaySchliessen()">✕</button>
+    </div>
+
+    <!-- SHEET BODY – wird dynamisch befüllt -->
+    <div class="sheet-body" id="sheet-body"></div>
+
+    <!-- SHEET FOOTER – wird dynamisch befüllt -->
+    <div class="sheet-footer" id="sheet-footer"></div>
+  </div>
+</div>
+
+
+<!-- ══ DATEN ══ -->
+<script src="data.js"></script>
+
+<!-- ══ LEAFLET ══ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   KONFIGURATION
+   ↓ Hier deine eigenen Werte eintragen ↓
+═══════════════════════════════════════════════════════ */
+const CONFIG = {
+  // Passwort für den Admin-Bereich
+  passwort: "meinPasswort123",
+
+  // Cloudinary – nach Registrierung ausfüllen:
+  cloudinary_cloud_name: "DEIN_CLOUD_NAME",   // z.B. "abc123xyz"
+  cloudinary_upload_preset: "schnapsglas",     // Upload Preset Name
+};
+
+/* ═══════════════════════════════════════════════════════
+   ZUSTAND
+═══════════════════════════════════════════════════════ */
+let eingeloggt   = false;
+let aktuellesFoto = null;   // { blob, dataUrl } – vom Handy gewählt
+let naechsteId   = Math.max(0, ...GLAESER.map(g => g.id)) + 1;
+
+/* ═══════════════════════════════════════════════════════
+   KARTE INITIALISIEREN
+═══════════════════════════════════════════════════════ */
+const map = L.map("map", {
+  center: [30, 15], zoom: 3,
+  zoomControl: false, attributionControl: false
+});
+
+L.control.zoom({ position: "bottomright" }).addTo(map);
+L.control.attribution({
+  position: "bottomleft",
+  prefix: "© <a href='https://carto.com' target='_blank'>CartoDB</a>"
+}).addTo(map);
+
+L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+  maxZoom: 19
+}).addTo(map);
+
+/* ═══════════════════════════════════════════════════════
+   MARKER ICON
+═══════════════════════════════════════════════════════ */
+function markerIcon() {
+  return L.divIcon({
+    className: "",
+    html: `<div class="marker-pin"><div class="pin-inner">🥃</div></div>`,
+    iconSize:    [32, 32],
+    iconAnchor:  [16, 32],
+    popupAnchor: [0, -36]
+  });
+}
+
+/* ═══════════════════════════════════════════════════════
+   POPUP HTML
+═══════════════════════════════════════════════════════ */
+function popupHTML(g) {
+  const img = g.foto
+    ? `<img class="popup-img" src="${g.foto}" alt="${esc(g.name)}">`
+    : `<div class="popup-no-img">🥃</div>`;
+
+  const datum = g.datum
+    ? `<div class="popup-datum">📅 ${formatDatum(g.datum)}</div>`
+    : "";
+
+  return `<div>
+    ${img}
+    <div class="popup-body">
+      <div class="popup-land">${esc(g.land)}</div>
+      <div class="popup-name">${esc(g.name)}</div>
+      ${datum}
+      <div class="popup-text">${esc(g.text)}</div>
+    </div>
+  </div>`;
+}
+
+function formatDatum(iso) {
+  if (!iso) return "";
+  const [y, m, d] = iso.split("-");
+  return `${d}.${m}.${y}`;
+}
+
+/* ═══════════════════════════════════════════════════════
+   ALLE GLÄSER AUF KARTE SETZEN
+═══════════════════════════════════════════════════════ */
+function alleGlaeserLaden() {
+  GLAESER.forEach(g => {
+    L.marker([g.lat, g.lng], { icon: markerIcon() })
+      .addTo(map)
+      .bindPopup(popupHTML(g), { maxWidth: 280, minWidth: 280 });
+  });
+
+  const n = GLAESER.length;
+  document.getElementById("zaehler").textContent =
+    n + (n === 1 ? " Glas" : " Gläser");
+}
+
+/* ═══════════════════════════════════════════════════════
+   OVERLAY ÖFFNEN / SCHLIESSEN
+═══════════════════════════════════════════════════════ */
+function overlayOeffnen() {
+  document.getElementById("overlay").classList.add("visible");
+  document.body.style.overflow = "hidden";
+}
+
+function overlaySchliessen() {
+  document.getElementById("overlay").classList.remove("visible");
+  document.body.style.overflow = "";
+  aktuellesFoto = null;
+}
+
+function overlayKlick(e) {
+  if (e.target === document.getElementById("overlay")) overlaySchliessen();
+}
+
+function setSheet(title, body, footer) {
+  document.getElementById("sheet-title").textContent  = title;
+  document.getElementById("sheet-body").innerHTML     = body;
+  document.getElementById("sheet-footer").innerHTML   = footer;
+}
+
+/* ═══════════════════════════════════════════════════════
+   ADMIN-BUTTON: Passwort oder direkt Formular
+═══════════════════════════════════════════════════════ */
+function adminOeffnen() {
+  if (eingeloggt) {
+    formularOeffnen();
+  } else {
+    passwortPanel();
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   PASSWORT-PANEL
+═══════════════════════════════════════════════════════ */
+function passwortPanel() {
+  setSheet(
+    "🔐 Admin-Zugang",
+    `<div id="pw-panel">
+      <p>Gib dein Passwort ein um Gläser hinzuzufügen.</p>
+      <div class="form-group">
+        <input type="password" id="pw-input"
+          placeholder="Passwort"
+          onkeydown="if(event.key==='Enter') passwortPruefen()">
+      </div>
+      <div class="feedback-msg" id="pw-feedback"></div>
+    </div>`,
+    `<button class="btn-primary" onclick="passwortPruefen()">Einloggen</button>`
+  );
+  overlayOeffnen();
+  setTimeout(() => document.getElementById("pw-input")?.focus(), 400);
+}
+
+function passwortPruefen() {
+  const eingabe = document.getElementById("pw-input")?.value || "";
+  if (eingabe === CONFIG.passwort) {
+    eingeloggt = true;
+    overlaySchliessen();
+    // FAB und Export-Button einblenden
+    document.getElementById("fab").style.display        = "flex";
+    document.getElementById("export-btn").style.display = "flex";
+    setTimeout(() => formularOeffnen(), 300);
+  } else {
+    const fb = document.getElementById("pw-feedback");
+    fb.textContent = "Falsches Passwort. Bitte erneut versuchen.";
+    fb.className   = "feedback-msg err";
+    document.getElementById("pw-input").value = "";
+    document.getElementById("pw-input").focus();
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   FORMULAR: Neues Glas hinzufügen
+═══════════════════════════════════════════════════════ */
+function formularOeffnen() {
+  aktuellesFoto = null;
+
+  const heute = new Date().toISOString().slice(0, 10);
+
+  const body = `
+    <div class="feedback-msg" id="form-feedback"></div>
+    <div class="upload-progress" id="upload-progress">
+      <div class="spinner"></div>
+      <span>Foto wird hochgeladen…</span>
+    </div>
+
+    <div class="form-section">📸 Foto</div>
+
+    <div class="form-group">
+      <div class="foto-upload-area" id="foto-area" onclick="document.getElementById('foto-input').click()">
+        <div class="foto-placeholder" id="foto-placeholder">
+          <span class="icon">📷</span>
+          <p>Foto aufnehmen oder aus Galerie wählen</p>
+          <span>JPG, PNG – max. 10 MB</span>
+        </div>
+        <img class="foto-preview" id="foto-preview" style="display:none">
+        <span class="foto-change" id="foto-change" style="display:none">Foto ändern</span>
+      </div>
+      <input type="file" id="foto-input" accept="image/*" capture="environment"
+             onchange="fotoGewaehlt(this)">
+    </div>
+
+    <div class="form-section">📍 Ort</div>
+
+    <div class="form-group">
+      <label>Ort &amp; Land <span class="req">*</span></label>
+      <input type="text" id="f-name" placeholder="z.B. Berlin, Deutschland">
+    </div>
+
+    <div class="form-group">
+      <label>Land (kurz) <span class="req">*</span></label>
+      <input type="text" id="f-land" placeholder="z.B. Deutschland">
+    </div>
+
+    <div class="form-group">
+      <label>Koordinaten <span class="req">*</span></label>
+      <div class="coord-row">
+        <input type="number" id="f-lat" placeholder="Breitengrad" step="any">
+        <input type="number" id="f-lng" placeholder="Längengrad"  step="any">
+      </div>
+      <div class="coord-hint">
+        🗺 <a href="https://maps.google.com" target="_blank">Google Maps</a>
+        → Ort antippen → Koordinaten ablesen
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Datum des Kaufs</label>
+      <input type="date" id="f-datum" value="${heute}">
+    </div>
+
+    <div class="form-section">🥃 Geschichte</div>
+
+    <div class="form-group">
+      <label>Deine persönliche Geschichte <span class="req">*</span></label>
+      <textarea id="f-text"
+        placeholder="Wo hast du das Glas gefunden? Was ist die besondere Erinnerung dazu?"></textarea>
+    </div>
+  `;
+
+  const footer = `
+    <button class="btn-secondary" onclick="overlaySchliessen()">Abbrechen</button>
+    <button class="btn-primary" id="submit-btn" onclick="glasHinzufuegen()">📍 Pinnen & Speichern</button>
+  `;
+
+  setSheet("＋ Neues Glas", body, footer);
+  overlayOeffnen();
+}
+
+/* ═══════════════════════════════════════════════════════
+   FOTO AUSWÄHLEN (Handy Kamera / Galerie)
+═══════════════════════════════════════════════════════ */
+function fotoGewaehlt(input) {
+  const datei = input.files[0];
+  if (!datei) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    aktuellesFoto = { blob: datei, dataUrl: e.target.result };
+
+    // Vorschau zeigen
+    const preview = document.getElementById("foto-preview");
+    const placeholder = document.getElementById("foto-placeholder");
+    const area = document.getElementById("foto-area");
+    const change = document.getElementById("foto-change");
+
+    preview.src = e.target.result;
+    preview.style.display = "block";
+    placeholder.style.display = "none";
+    change.style.display = "block";
+    area.classList.add("has-foto");
+  };
+  reader.readAsDataURL(datei);
+}
+
+/* ═══════════════════════════════════════════════════════
+   GLAS HINZUFÜGEN
+═══════════════════════════════════════════════════════ */
+async function glasHinzufuegen() {
+  const name  = document.getElementById("f-name")?.value.trim()  || "";
+  const land  = document.getElementById("f-land")?.value.trim()  || "";
+  const lat   = parseFloat(document.getElementById("f-lat")?.value  || "");
+  const lng   = parseFloat(document.getElementById("f-lng")?.value  || "");
+  const datum = document.getElementById("f-datum")?.value || "";
+  const text  = document.getElementById("f-text")?.value.trim()  || "";
+
+  // Validierung
+  if (!name || !land || !text) {
+    zeigeFeedback("form-feedback", "Bitte Ort, Land und Geschichte ausfüllen.", "err"); return;
+  }
+  if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+    zeigeFeedback("form-feedback", "Ungültige Koordinaten. Breitengrad: −90 bis 90, Längengrad: −180 bis 180.", "err"); return;
+  }
+
+  // Button deaktivieren
+  const btn = document.getElementById("submit-btn");
+  btn.disabled = true;
+
+  // Foto hochladen falls vorhanden
+  let fotoUrl = null;
+
+  if (aktuellesFoto) {
+    // Cloudinary noch nicht konfiguriert?
+    if (CONFIG.cloudinary_cloud_name === "DEIN_CLOUD_NAME") {
+      zeigeFeedback("form-feedback",
+        "⚠ Cloudinary noch nicht eingerichtet. Schau in die Anleitung (setup.html). Das Glas wird ohne Foto gespeichert.",
+        "err");
+      fotoUrl = null;
+    } else {
+      document.getElementById("upload-progress").classList.add("active");
+      fotoUrl = await fotoHochladen(aktuellesFoto.blob);
+      document.getElementById("upload-progress").classList.remove("active");
+
+      if (!fotoUrl) {
+        zeigeFeedback("form-feedback", "Foto-Upload fehlgeschlagen. Glas wird ohne Foto gespeichert.", "err");
+      }
+    }
+  }
+
+  // Neues Glas-Objekt
+  const glas = {
+    id: naechsteId++,
+    name, land, lat, lng,
+    foto: fotoUrl,
+    text, datum
+  };
+
+  // Zu GLAESER-Array hinzufügen
+  GLAESER.push(glas);
+
+  // Marker auf Karte setzen
+  L.marker([lat, lng], { icon: markerIcon() })
+    .addTo(map)
+    .bindPopup(popupHTML(glas), { maxWidth: 280, minWidth: 280 })
+    .openPopup();
+
+  // Karte hinfliegen
+  map.flyTo([lat, lng], Math.max(map.getZoom(), 6), { duration: 1.2 });
+
+  // Zähler aktualisieren
+  const n = GLAESER.length;
+  document.getElementById("zaehler").textContent = n + (n === 1 ? " Glas" : " Gläser");
+
+  // Overlay schließen & Export-Hinweis
+  overlaySchliessen();
+  setTimeout(() => exportHinweis(glas.name), 500);
+}
+
+/* ═══════════════════════════════════════════════════════
+   FOTO ZU CLOUDINARY HOCHLADEN
+═══════════════════════════════════════════════════════ */
+async function fotoHochladen(blob) {
+  try {
+    const formData = new FormData();
+    formData.append("file", blob);
+    formData.append("upload_preset", CONFIG.cloudinary_upload_preset);
+
+    const res = await fetch(
+      `https://api.cloudinary.com/v1_1/${CONFIG.cloudinary_cloud_name}/image/upload`,
+      { method: "POST", body: formData }
+    );
+
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.secure_url || null;
+  } catch(e) {
+    console.error("Upload-Fehler:", e);
+    return null;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   EXPORT-HINWEIS: Nach dem Hinzufügen
+═══════════════════════════════════════════════════════ */
+function exportHinweis(name) {
+  setSheet(
+    "✓ Gespeichert!",
+    `<div style="text-align:center; padding: 8px 0 16px;">
+      <div style="font-size:3rem; margin-bottom:12px;">🥃</div>
+      <p style="color:var(--hell); font-size:0.95rem; margin-bottom:8px;">
+        <strong>${esc(name)}</strong> wurde zur Karte hinzugefügt!
+      </p>
+      <p style="color:var(--muted); font-size:0.82rem; line-height:1.65; margin-bottom:20px;">
+        Um das Glas dauerhaft zu speichern, exportiere jetzt die
+        <code style="color:var(--gold)">data.js</code> und lade sie
+        auf GitHub hoch.
+      </p>
+    </div>
+    <div class="form-section">📋 Deine neue data.js</div>
+    <div class="code-box" id="export-code">${esc(generiereDataJs())}</div>
+    <button class="copy-btn" id="copy-btn" onclick="codeKopieren()">📋 In Zwischenablage kopieren</button>
+    `,
+    `<button class="btn-secondary" onclick="overlaySchliessen()">Schließen</button>
+     <button class="btn-primary" onclick="formularOeffnen()">＋ Nächstes Glas</button>`
+  );
+  overlayOeffnen();
+}
+
+/* ═══════════════════════════════════════════════════════
+   EXPORT PANEL (manuell über Button)
+═══════════════════════════════════════════════════════ */
+function exportPanel() {
+  if (!eingeloggt) { adminOeffnen(); return; }
+
+  setSheet(
+    "⬇ data.js exportieren",
+    `<p style="color:var(--muted); font-size:0.83rem; line-height:1.65; margin-bottom:16px;">
+      Kopiere diesen Code, ersetze damit den Inhalt deiner
+      <code style="color:var(--gold)">data.js</code> auf GitHub,
+      und committe die Änderung. Deine Karte wird automatisch aktualisiert.
+    </p>
+    <div class="form-section">📋 data.js Inhalt</div>
+    <div class="code-box">${esc(generiereDataJs())}</div>
+    <button class="copy-btn" id="copy-btn" onclick="codeKopieren()">📋 In Zwischenablage kopieren</button>`,
+    `<button class="btn-secondary" onclick="overlaySchliessen()">Schließen</button>`
+  );
+  overlayOeffnen();
+}
+
+/* ═══════════════════════════════════════════════════════
+   DATA.JS GENERIEREN
+═══════════════════════════════════════════════════════ */
+function generiereDataJs() {
+  const eintraege = GLAESER.map(g => {
+    return [
+      `  {`,
+      `    id:    ${g.id},`,
+      `    name:  ${JSON.stringify(g.name)},`,
+      `    land:  ${JSON.stringify(g.land)},`,
+      `    lat:   ${g.lat},`,
+      `    lng:   ${g.lng},`,
+      `    foto:  ${g.foto ? JSON.stringify(g.foto) : "null"},`,
+      `    text:  ${JSON.stringify(g.text)},`,
+      `    datum: ${g.datum ? JSON.stringify(g.datum) : "null"}`,
+      `  }`,
+    ].join("\n");
+  }).join(",\n\n");
+
+  return [
+    `// data.js – Schnapsglas-Sammlung`,
+    `// Zuletzt aktualisiert: ${new Date().toLocaleDateString("de-DE")}`,
+    `// ${GLAESER.length} Gläser gespeichert`,
+    ``,
+    `const GLAESER = [`,
+    eintraege,
+    `];`,
+  ].join("\n");
+}
+
+/* ═══════════════════════════════════════════════════════
+   CODE KOPIEREN
+═══════════════════════════════════════════════════════ */
+function codeKopieren() {
+  const code = generiereDataJs();
+  navigator.clipboard.writeText(code).then(() => {
+    const btn = document.getElementById("copy-btn");
+    btn.textContent = "✓ Kopiert!";
+    btn.classList.add("copied");
+    setTimeout(() => {
+      btn.textContent = "📋 In Zwischenablage kopieren";
+      btn.classList.remove("copied");
+    }, 2500);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════
+   HILFSFUNKTIONEN
+═══════════════════════════════════════════════════════ */
+function esc(str) {
+  return String(str ?? "")
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+function zeigeFeedback(id, text, typ) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = text;
+  el.className = "feedback-msg " + typ;
+  setTimeout(() => { el.textContent = ""; el.className = "feedback-msg"; }, 5000);
+}
+
+/* ═══════════════════════════════════════════════════════
+   START
+═══════════════════════════════════════════════════════ */
+alleGlaeserLaden();
+</script>
+</body>
+</html>
