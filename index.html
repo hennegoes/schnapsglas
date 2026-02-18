@@ -13,16 +13,16 @@
        VARIABLEN & RESET
     ══════════════════════════════════════════ */
     :root {
-      --gold:        #C8860A;
-      --gold-hell:   #E8A520;
-      --bg:          #0F0A04;
-      --panel:       #1A1208;
-      --panel2:      #221A0A;
-      --border:      rgba(200,134,10,0.22);
-      --border-gold: rgba(200,134,10,0.55);
-      --hell:        #F0E6CC;
-      --muted:       #7A6540;
-      --text:        #CDB98A;
+      --gold:        #3B82F6;
+      --gold-hell:   #60A5FA;
+      --bg:          #05080F;
+      --panel:       #0A0F1A;
+      --panel2:      #0F1628;
+      --border:      rgba(59,130,246,0.22);
+      --border-gold: rgba(59,130,246,0.55);
+      --hell:        #E0EEFF;
+      --muted:       #4A6080;
+      --text:        #8AAFD4;
       --green:       #4A9460;
       --red:         #944A4A;
     }
@@ -44,58 +44,131 @@
       position: fixed;
       top: 0; left: 0; right: 0;
       height: 54px;
-      background: linear-gradient(135deg, #0F0A04 0%, #1E1408 100%);
+      background: linear-gradient(135deg, #05080F 0%, #0A1020 100%);
       border-bottom: 1px solid var(--border-gold);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 16px;
+      padding: 0 12px;
       z-index: 900;
       box-shadow: 0 2px 20px rgba(0,0,0,0.7);
+      gap: 8px;
     }
 
-    .header-left { display: flex; align-items: center; gap: 10px; }
-
-    .header-logo { font-size: 24px; }
+    .header-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+    .header-logo { font-size: 22px; flex-shrink: 0; }
 
     .header-titles h1 {
       font-family: 'Playfair Display', serif;
-      font-size: clamp(0.85rem, 3vw, 1.05rem);
+      font-size: clamp(0.75rem, 2.5vw, 1rem);
       color: var(--gold-hell);
       line-height: 1.1;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .header-titles p {
-      font-size: 0.58rem;
+      font-size: 0.55rem;
       color: var(--muted);
       letter-spacing: 2px;
       text-transform: uppercase;
     }
 
-    .header-right { display: flex; align-items: center; gap: 8px; }
+    /* Mittlere Header-Buttons (Filter + Glas-Hinzufügen) */
+    .header-center {
+      display: flex; align-items: center; gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .header-icon-btn {
+      height: 34px;
+      background: rgba(59,130,246,0.08);
+      border: 1px solid var(--border-gold);
+      border-radius: 8px;
+      color: var(--gold);
+      font-size: 15px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 5px;
+      transition: all 0.2s;
+      padding: 0 10px;
+      font-family: 'Lora', serif;
+      font-size: 0.75rem;
+      white-space: nowrap;
+    }
+    .header-icon-btn:hover { background: rgba(59,130,246,0.18); }
+    .header-icon-btn.aktiv { background: rgba(59,130,246,0.22); border-color: var(--gold); }
+    .header-icon-btn .hib-icon { font-size: 16px; }
+
+    /* Rechte Seite: Zähler + Hamburger */
+    .header-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 
     #zaehler {
-      background: rgba(200,134,10,0.1);
+      background: rgba(59,130,246,0.08);
       border: 1px solid var(--border-gold);
       border-radius: 20px;
       color: var(--gold-hell);
-      padding: 3px 12px;
-      font-size: 0.72rem;
+      padding: 3px 10px;
+      font-size: 0.7rem;
+      white-space: nowrap;
     }
 
-    /* Admin-Button */
-    #admin-btn {
+    /* Hamburger-Menü-Button */
+    #menu-btn {
       width: 36px; height: 36px;
-      background: rgba(200,134,10,0.12);
+      background: rgba(59,130,246,0.08);
       border: 1px solid var(--border-gold);
-      border-radius: 50%;
+      border-radius: 8px;
       color: var(--gold);
-      font-size: 16px;
       cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 4px;
       transition: all 0.2s;
-      flex-shrink: 0;
+      flex-shrink: 0; padding: 0;
     }
-    #admin-btn:hover { background: rgba(200,134,10,0.25); transform: rotate(15deg); }
+    #menu-btn:hover { background: rgba(59,130,246,0.18); }
+    #menu-btn span {
+      display: block; width: 16px; height: 2px;
+      background: var(--gold); border-radius: 2px;
+      transition: all 0.25s;
+    }
+    #menu-btn.offen span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+    #menu-btn.offen span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+    #menu-btn.offen span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+
+    /* Dropdown-Navigationsmenü */
+    #nav-dropdown {
+      position: fixed;
+      top: 54px; right: 0;
+      width: 230px;
+      background: var(--panel);
+      border: 1px solid var(--border-gold);
+      border-top: none;
+      border-radius: 0 0 0 16px;
+      z-index: 850;
+      overflow: hidden;
+      transform: translateY(-110%);
+      transition: transform 0.3s cubic-bezier(0.32,0.72,0,1);
+      box-shadow: -4px 8px 32px rgba(0,0,0,0.5);
+    }
+    #nav-dropdown.offen { transform: translateY(0); }
+
+    .nav-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 18px;
+      color: var(--text);
+      font-family: 'Lora', serif;
+      font-size: 0.88rem;
+      cursor: pointer;
+      border: none; background: transparent; width: 100%;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+    }
+    .nav-item:last-child { border-bottom: none; }
+    .nav-item:hover { background: rgba(59,130,246,0.08); color: var(--hell); }
+    .nav-item .nav-icon { font-size: 18px; flex-shrink: 0; }
+    .nav-item-label { flex: 1; }
+    .nav-item-sub { font-size: 0.65rem; color: var(--muted); display: block; margin-top: 1px; }
+    /* Login-only items verstecken bis eingeloggt */
+    .nav-item.login-only { display: none; }
 
     /* ══════════════════════════════════════════
        KARTE
@@ -485,68 +558,16 @@
     .btn-secondary:hover { border-color: var(--border-gold); color: var(--text); }
 
     /* ══════════════════════════════════════════
-       EXPORT BUTTON (floating, unten links)
-    ══════════════════════════════════════════ */
-    #export-btn {
-      position: fixed;
-      bottom: 24px;
-      right: 16px;
-      z-index: 800;
-      background: var(--panel);
-      border: 1px solid var(--border-gold);
-      border-radius: 12px;
-      color: var(--gold);
-      padding: 10px 16px;
-      font-family: 'Lora', serif;
-      font-size: 0.76rem;
-      cursor: pointer;
-      display: none;       /* nur sichtbar wenn eingeloggt */
-      align-items: center;
-      gap: 6px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-      transition: all 0.2s;
-    }
-    #export-btn:hover { background: rgba(200,134,10,0.12); transform: translateY(-2px); }
-
-    /* ══════════════════════════════════════════
-       MOBILE FAB (Floating Action Button)
-    ══════════════════════════════════════════ */
-    #fab {
-      position: fixed;
-      bottom: 24px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 800;
-      background: var(--gold);
-      color: var(--bg);
-      border: none;
-      border-radius: 28px;
-      padding: 14px 28px;
-      font-family: 'Playfair Display', serif;
-      font-size: 0.95rem;
-      cursor: pointer;
-      box-shadow: 0 6px 28px rgba(200,134,10,0.55);
-      display: none;   /* nur nach Login sichtbar */
-      align-items: center;
-      gap: 8px;
-      transition: all 0.2s;
-      -webkit-tap-highlight-color: transparent;
-      white-space: nowrap;
-    }
-    #fab:hover { background: var(--gold-hell); transform: translateX(-50%) translateY(-2px); }
-    #fab:active { transform: translateX(-50%) scale(0.97); }
-
-    /* ══════════════════════════════════════════
        CODE-ANZEIGE (nach Export)
     ══════════════════════════════════════════ */
     .code-box {
-      background: #080604;
+      background: #020508;
       border: 1px solid var(--border);
       border-radius: 10px;
       padding: 14px;
       font-family: 'Courier New', monospace;
       font-size: 0.72rem;
-      color: #C8B890;
+      color: #8AAFD4;
       max-height: 220px;
       overflow-y: auto;
       white-space: pre;
@@ -848,30 +869,13 @@
     }
     .filter-anwenden:hover { background: var(--gold-hell); }
 
-    /* Filter-Button (floating) */
-    #filter-btn {
-      position: fixed;
-      top: 64px; right: 12px;
-      z-index: 699;
-      background: var(--panel);
-      border: 1px solid var(--border-gold);
-      border-radius: 10px;
-      color: var(--gold);
-      padding: 8px 14px;
-      font-family: 'Lora', serif;
-      font-size: 0.78rem;
-      cursor: pointer;
-      display: flex; align-items: center; gap: 6px;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.4);
-      transition: all 0.2s;
-    }
-    #filter-btn:hover { background: rgba(200,134,10,0.12); }
-    #filter-btn.aktiv { background: rgba(200,134,10,0.2); border-color: var(--gold); }
+    /* Filter-Badge (wird im Header-Button angezeigt) */
     .filter-badge {
       background: var(--gold); color: var(--bg);
-      border-radius: 50%; width: 16px; height: 16px;
-      font-size: 0.6rem; font-weight: 700;
+      border-radius: 50%; width: 15px; height: 15px;
+      font-size: 0.55rem; font-weight: 700;
       display: none; align-items: center; justify-content: center;
+      margin-left: 2px;
     }
     .filter-badge.sichtbar { display: flex; }
 
@@ -967,37 +971,66 @@
       <p>Meine persönliche Sammlung</p>
     </div>
   </div>
+
+  <!-- Mitte: Filter + Glas hinzufügen (nach Login) -->
+  <div class="header-center">
+    <button class="header-icon-btn" id="filter-btn" onclick="filterToggle()" title="Filter">
+      <span class="hib-icon">🔍</span> Filter
+      <span class="filter-badge" id="filter-badge"></span>
+    </button>
+    <button class="header-icon-btn" id="add-btn" onclick="formularOeffnen()" title="Glas hinzufügen"
+            style="display:none">
+      <span class="hib-icon">＋</span> Hinzufügen
+    </button>
+  </div>
+
   <div class="header-right">
     <span id="zaehler">0 Gläser</span>
-    <button id="admin-btn" onclick="adminOeffnen()" title="Glas hinzufügen / Admin">⚙</button>
+    <!-- Hamburger -->
+    <button id="menu-btn" onclick="menuToggle()" title="Menü">
+      <span></span><span></span><span></span>
+    </button>
   </div>
 </header>
 
 <!-- ══ KARTE ══ -->
 <div id="map"></div>
 
-<!-- ══ FAB (nach Login) ══ -->
-<button id="fab" onclick="formularOeffnen()">
-  <span>＋</span> Glas hinzufügen
-</button>
+<!-- ══ HAMBURGER DROPDOWN ══ -->
+<div id="nav-dropdown">
+  <button class="nav-item" onclick="adminOeffnen(); menuSchliessen()">
+    <span class="nav-icon">🔐</span>
+    <span class="nav-item-label">
+      Admin-Zugang
+      <span class="nav-item-sub">Einloggen um Gläser zu verwalten</span>
+    </span>
+  </button>
+  <button class="nav-item login-only" id="nav-liste" onclick="listeOeffnen(); menuSchliessen()">
+    <span class="nav-icon">📋</span>
+    <span class="nav-item-label">
+      Meine Gläser
+      <span class="nav-item-sub">Bearbeiten, löschen, suchen</span>
+    </span>
+  </button>
+  <button class="nav-item login-only" id="nav-add" onclick="formularOeffnen(); menuSchliessen()">
+    <span class="nav-icon">＋</span>
+    <span class="nav-item-label">
+      Glas hinzufügen
+      <span class="nav-item-sub">Neuen Eintrag erstellen</span>
+    </span>
+  </button>
+  <button class="nav-item login-only" id="nav-export" onclick="exportPanel(); menuSchliessen()">
+    <span class="nav-icon">⬇</span>
+    <span class="nav-item-label">
+      data.js exportieren
+      <span class="nav-item-sub">Daten für GitHub speichern</span>
+    </span>
+  </button>
+</div>
 
-<!-- ══ LISTE BUTTON (nach Login) ══ -->
-<button id="liste-btn" onclick="listeOeffnen()" style="
-  position:fixed; bottom:24px; left:16px; z-index:800;
-  background:var(--panel); border:1px solid var(--border-gold);
-  border-radius:28px; padding:14px 22px;
-  font-family:'Lora',serif; font-size:0.88rem;
-  color:var(--gold); cursor:pointer;
-  box-shadow:0 6px 28px rgba(0,0,0,0.5);
-  display:none; align-items:center; gap:8px;
-  transition:all 0.2s; white-space:nowrap;
-">📋 Meine Gläser</button>
-
-<!-- ══ FILTER BUTTON ══ -->
-<button id="filter-btn" onclick="filterToggle()">
-  🔍 Filter
-  <span class="filter-badge" id="filter-badge"></span>
-</button>
+<!-- Klick außerhalb schließt Menü -->
+<div id="menu-backdrop" onclick="menuSchliessen()"
+     style="display:none; position:fixed; inset:0; z-index:840;"></div>
 
 <!-- ══ FILTER PANEL ══ -->
 <div id="filter-panel">
@@ -1013,11 +1046,6 @@
     <button class="filter-anwenden" onclick="filterAnwenden()">✓ Anwenden</button>
   </div>
 </div>
-
-<!-- ══ EXPORT BUTTON (nach Login) ══ -->
-<button id="export-btn" onclick="exportPanel()">
-  ⬇ data.js exportieren
-</button>
 
 <!-- ══════════════════════════════════════════
      OVERLAY: Alles läuft durch diesen Container
@@ -1232,14 +1260,37 @@ function gruppenPopupHTML(gruppeRoh, index) {
   return `<div>${popupHTML(g)}${nav}</div>`;
 }
 
-/* ── Navigation per Cache-Key ── */
+/* ── Navigation per Cache-Key — Popup bleibt offen ── */
 function popupNavigieren(cacheKey, neuerIndex) {
   const gruppe = gruppenCache[cacheKey];
   if (!gruppe || !gruppe[neuerIndex]) return;
 
   const m = markerMap[gruppe[0].id];
   if (!m) return;
+
+  // Popup-Inhalt aktualisieren OHNE zu schließen
   m.setPopupContent(gruppenPopupHTML(gruppe, neuerIndex));
+
+  // Sicherstellen dass Popup offen bleibt
+  if (!m.isPopupOpen()) m.openPopup();
+}
+
+/* ═══════════════════════════════════════════════════════
+   HAMBURGER MENÜ
+═══════════════════════════════════════════════════════ */
+function menuToggle() {
+  const dropdown = document.getElementById("nav-dropdown");
+  const btn      = document.getElementById("menu-btn");
+  const backdrop = document.getElementById("menu-backdrop");
+  const offen    = dropdown.classList.toggle("offen");
+  btn.classList.toggle("offen", offen);
+  backdrop.style.display = offen ? "block" : "none";
+}
+
+function menuSchliessen() {
+  document.getElementById("nav-dropdown").classList.remove("offen");
+  document.getElementById("menu-btn").classList.remove("offen");
+  document.getElementById("menu-backdrop").style.display = "none";
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -1303,10 +1354,9 @@ function passwortPruefen() {
   if (eingabe === CONFIG.passwort) {
     eingeloggt = true;
     overlaySchliessen();
-    // FAB, Liste-Button und Export-Button einblenden
-    document.getElementById("fab").style.display        = "flex";
-    document.getElementById("liste-btn").style.display  = "flex";
-    document.getElementById("export-btn").style.display = "flex";
+    // Header-Button + Hamburger-Menü-Items einblenden
+    document.getElementById("add-btn").style.display = "flex";
+    document.querySelectorAll(".login-only").forEach(el => el.style.display = "flex");
     setTimeout(() => formularOeffnen(), 300);
   } else {
     const fb = document.getElementById("pw-feedback");
