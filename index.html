@@ -2810,11 +2810,11 @@ function statistikRenern() {
   const topLaender = Object.entries(laenderZahl)
     .sort((a,b) => b[1] - a[1]).slice(0, 7);
 
-  // Heatmap Länder-Code-Mapping (ISO 3166-1 alpha-2)
+  // Heatmap: Länder-Namen → numerische ISO-Codes → Anzahl
   const laenderKodiert = {};
   GLAESER.forEach(g => {
-    const code = laenderZuCode(g.land.trim());
-    if (code) laenderKodiert[code] = (laenderKodiert[code] || 0) + 1;
+    const numCode = laenderZuCode(g.land.trim());
+    if (numCode) laenderKodiert[numCode] = (laenderKodiert[numCode] || 0) + 1;
   });
 
   body.innerHTML = `
@@ -2922,129 +2922,121 @@ function statistikRenern() {
 }
 
 /* ── Weltkarte als SVG laden und Länder einfärben ── */
+/* world-atlas@2 nutzt numerische ISO 3166-1 Codes als geometry.id
+   z.B. 276 = Deutschland, 840 = USA
+   Wir bauen zwei Maps:
+   1. Länder-Name (Deutsch) → numerischer ISO-Code
+   2. numerischer Code → Anzahl Gläser
+   Dann wird beim Rendern geom.id mit der Map verglichen. */
+
+/* Länder-Name → numerischer ISO-Code */
+function laenderZuCode(name) {
+  const map = {
+    "Afghanistan":"4","Albanien":"8","Algerien":"12","Andorra":"20",
+    "Angola":"24","Argentinien":"32","Armenien":"51","Australien":"36",
+    "Österreich":"40","Aserbaidschan":"31","Bahrain":"48","Bangladesh":"50",
+    "Belarus":"112","Belgien":"56","Bolivien":"68","Bosnien":"70",
+    "Botswana":"72","Brasilien":"76","Bulgarien":"100","Kambodscha":"116",
+    "Kamerun":"120","Kanada":"124","Chile":"152","China":"156",
+    "Kolumbien":"170","Kongo":"180","Costa Rica":"188","Kroatien":"191",
+    "Kuba":"192","Tschechien":"203","Dänemark":"208","Ecuador":"218",
+    "Ägypten":"818","Elfenbeinküste":"384","Estland":"233","Äthiopien":"231",
+    "Finnland":"246","Frankreich":"250","Georgien":"268","Deutschland":"276",
+    "Ghana":"288","Griechenland":"300","Guatemala":"320","Honduras":"340",
+    "Ungarn":"348","Island":"352","Indien":"356","Indonesien":"360",
+    "Iran":"364","Irak":"368","Irland":"372","Israel":"376","Italien":"380",
+    "Jamaica":"388","Japan":"392","Jordanien":"400","Kasachstan":"398",
+    "Kenia":"404","Nordkorea":"408","Südkorea":"410","Kosovo":"383",
+    "Kuwait":"414","Laos":"418","Lettland":"428","Libanon":"422",
+    "Libyen":"434","Litauen":"440","Luxemburg":"442","Malaysia":"458",
+    "Mali":"466","Malta":"470","Mexiko":"484","Moldawien":"498",
+    "Mongolei":"496","Montenegro":"499","Marokko":"504","Mosambik":"508",
+    "Myanmar":"104","Namibia":"516","Nepal":"524","Niederlande":"528",
+    "Neuseeland":"554","Nicaragua":"558","Nigeria":"566","Nordmazedonien":"807",
+    "Norwegen":"578","Oman":"512","Pakistan":"586","Panama":"591",
+    "Paraguay":"600","Peru":"604","Philippinen":"608","Polen":"616",
+    "Portugal":"620","Katar":"634","Rumänien":"642","Russland":"643",
+    "Saudi-Arabien":"682","Senegal":"686","Serbien":"688","Singapur":"702",
+    "Slowakei":"703","Slowenien":"705","Somalia":"706","Südafrika":"710",
+    "Spanien":"724","Sri Lanka":"144","Sudan":"729","Schweden":"752",
+    "Schweiz":"756","Syrien":"760","Taiwan":"158","Tansania":"834",
+    "Thailand":"764","Tunesien":"788","Türkei":"792","Uganda":"800",
+    "Ukraine":"804","VAE":"784","Großbritannien":"826","USA":"840",
+    "Uruguay":"858","Venezuela":"862","Vietnam":"704","Jemen":"887",
+    "Sambia":"894","Zimbabwe":"716","Elfenbeinküste":"384",
+  };
+  if (map[name]) return map[name];
+  const low = name.toLowerCase();
+  const found = Object.entries(map).find(([k]) => k.toLowerCase() === low);
+  return found ? found[1] : null;
+}
+
 async function weltkarteLaden(laenderKodiert) {
   const container = document.getElementById("stats-karte");
   if (!container) return;
 
   try {
-    // Vereinfachte SVG-Weltkarte von Natural Earth via CDN
     const res = await fetch("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json");
     if (!res.ok) throw new Error("Nicht erreichbar");
-    const topo  = await res.json();
+    const topo = await res.json();
 
-    // TopoJSON → GeoJSON Features konvertieren (ohne externe Bibliothek)
-    const laenderFeatures = topojsonZuPfade(topo);
     const maxWert = Math.max(1, ...Object.values(laenderKodiert));
 
-    const svgPfade = laenderFeatures.map(({code, path}) => {
-      const n     = laenderKodiert[code] || 0;
-      const stufe = n === 0 ? 0 : Math.ceil(n / maxWert * 5);
-      return `<path class="land-${stufe}" d="${path}" title="${code}: ${n}"/>`;
+    // TopoJSON Arcs dekodieren
+    const arcs   = topo.arcs;
+    const scale  = topo.transform?.scale    || [1, 1];
+    const transl = topo.transform?.translate || [0, 0];
+
+    function dekodierArc(idx) {
+      const rev = idx < 0;
+      const src = arcs[rev ? ~idx : idx];
+      let x = 0, y = 0;
+      const pts = src.map(([dx, dy]) => {
+        x += dx; y += dy;
+        return [x * scale[0] + transl[0], y * scale[1] + transl[1]];
+      });
+      return rev ? pts.reverse() : pts;
+    }
+
+    function lonLatZuSvg([lon, lat]) {
+      return [(lon + 180) / 360 * 960, (90 - lat) / 180 * 500];
+    }
+
+    function geomZuPfad(geom) {
+      if (!geom?.arcs) return "";
+      const ringe = geom.type === "MultiPolygon"
+        ? geom.arcs.flat()
+        : geom.arcs;
+      return ringe.map(ring => {
+        const pts = ring.flatMap(dekodierArc).map(lonLatZuSvg);
+        return "M" + pts.map(([x,y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join("L") + "Z";
+      }).join(" ");
+    }
+
+    // Alle Länder-Geometrien durchgehen
+    // geom.id ist der numerische ISO-Code als String/Zahl
+    const geometrien = topo.objects?.countries?.geometries || [];
+    const pfade = geometrien.map(geom => {
+      const numId = String(geom.id ?? "");
+      const n     = laenderKodiert[numId] || 0;
+      const stufe = n === 0 ? 0 : Math.min(5, Math.ceil(n / maxWert * 5));
+      const pfad  = geomZuPfad(geom);
+      return pfad ? `<path class="land-${stufe}" d="${pfad}"/>` : "";
     }).join("");
 
     container.innerHTML = `
-      <svg viewBox="0 0 960 500" xmlns="http://www.w3.org/2000/svg">
-        ${svgPfade}
+      <svg viewBox="0 0 960 500" xmlns="http://www.w3.org/2000/svg"
+           style="width:100%;height:auto;display:block">
+        ${pfade}
       </svg>`;
+
   } catch(e) {
-    // Fallback: einfache Text-Liste
+    // Fallback
     container.innerHTML = `
       <div style="padding:14px;font-size:0.75rem;color:var(--muted)">
-        🌍 Bereiste Länder:<br><br>
-        ${Object.keys(laenderKodiert).map(c =>
-          `<span style="color:var(--gold-hell);margin-right:8px">${c}</span>`
-        ).join("")}
+        🌍 Bereiste Länder: ${Object.keys(laenderKodiert).join(", ")}
       </div>`;
   }
-}
-
-/* Minimaler TopoJSON-zu-SVG Konverter */
-function topojsonZuPfade(topo) {
-  // Nutzt den eingebauten Path-Generator ohne d3
-  const arcs   = topo.arcs;
-  const scale  = topo.transform?.scale  || [1,1];
-  const transl = topo.transform?.translate || [0,0];
-
-  function arcZuPunkte(arcIdx) {
-    const rev = arcIdx < 0;
-    const pts = arcs[rev ? ~arcIdx : arcIdx];
-    let x = 0, y = 0;
-    return pts.map(([dx, dy]) => {
-      x += dx; y += dy;
-      return [x * scale[0] + transl[0], y * scale[1] + transl[1]];
-    });
-  }
-
-  function projektion([lon, lat]) {
-    // Einfache equirektanguläre Projektion auf 960×500
-    return [
-      (lon + 180) / 360 * 960,
-      (90 - lat) / 180 * 500
-    ];
-  }
-
-  function geometrieZuPfad(geom) {
-    if (!geom) return "";
-    const typen = geom.type === "MultiPolygon" ? geom.arcs : [geom.arcs];
-    return typen.map(poly =>
-      poly.map(ring => {
-        const punkte = ring.flatMap(arcIdx => arcZuPunkte(arcIdx))
-          .map(projektion);
-        return "M" + punkte.map(p => p.map(v => v.toFixed(1)).join(",")).join("L") + "Z";
-      }).join(" ")
-    ).join(" ");
-  }
-
-  const objekte = topo.objects;
-  const features = [];
-  Object.values(objekte).forEach(obj => {
-    (obj.geometries || []).forEach(geom => {
-      const code = geom.properties?.iso_a2 || geom.id || "";
-      const path = geometrieZuPfad(geom);
-      if (path) features.push({ code, path });
-    });
-  });
-  return features;
-}
-
-/* Länder-Name → ISO-Code Mapping (häufigste) */
-function laenderZuCode(name) {
-  const map = {
-    "Deutschland":"DE","Österreich":"AT","Schweiz":"CH","Frankreich":"FR",
-    "Italien":"IT","Spanien":"ES","Portugal":"PT","Niederlande":"NL",
-    "Belgien":"BE","Polen":"PL","Tschechien":"CZ","Ungarn":"HU",
-    "Kroatien":"HR","Griechenland":"GR","Türkei":"TR","Schweden":"SE",
-    "Norwegen":"NO","Dänemark":"DK","Finnland":"FI","Irland":"IE",
-    "Großbritannien":"GB","USA":"US","Kanada":"CA","Mexiko":"MX",
-    "Brasilien":"BR","Argentinien":"AR","Japan":"JP","China":"CN",
-    "Indien":"IN","Australien":"AU","Südafrika":"ZA","Ägypten":"EG",
-    "Marokko":"MA","Thailand":"TH","Vietnam":"VN","Indonesien":"ID",
-    "Malaysia":"MY","Singapur":"SG","Neuseeland":"NZ","Russland":"RU",
-    "Ukraine":"UA","Rumänien":"RO","Bulgarien":"BG","Serbien":"RS",
-    "Slowakei":"SK","Slowenien":"SI","Litauen":"LT","Lettland":"LV",
-    "Estland":"EE","Island":"IS","Luxemburg":"LU","Malta":"MT",
-    "Zypern":"CY","Albanien":"AL","Nordmazedonien":"MK","Bosnien":"BA",
-    "Montenegro":"ME","Kosovo":"XK","Georgien":"GE","Armenien":"AM",
-    "Aserbaidschan":"AZ","Kasachstan":"KZ","Israel":"IL","Jordanien":"JO",
-    "Libanon":"LB","Saudi-Arabien":"SA","VAE":"AE","Katar":"QA",
-    "Oman":"OM","Kuwait":"KW","Iran":"IR","Irak":"IQ","Pakistan":"PK",
-    "Bangladesh":"BD","Sri Lanka":"LK","Nepal":"NP","Myanmar":"MM",
-    "Kambodscha":"KH","Laos":"LA","Philippinen":"PH","Taiwan":"TW",
-    "Südkorea":"KR","Nordkorea":"KP","Mongolei":"MN","Peru":"PE",
-    "Chile":"CL","Kolumbien":"CO","Venezuela":"VE","Ecuador":"EC",
-    "Bolivien":"BO","Paraguay":"PY","Uruguay":"UY","Kuba":"CU",
-    "Jamaica":"JM","Tunesien":"TN","Algerien":"DZ","Libyen":"LY",
-    "Ghana":"GH","Nigeria":"NG","Kenia":"KE","Tansania":"TZ",
-    "Äthiopien":"ET","Uganda":"UG","Mosambik":"MZ","Namibia":"NA",
-    "Botswana":"BW","Zimbabwe":"ZW","Sambia":"ZM","Angola":"AO",
-    "Kamerun":"CM","Elfenbeinküste":"CI","Senegal":"SN","Mali":"ML",
-  };
-  // Direktes Match
-  if (map[name]) return map[name];
-  // Case-insensitive
-  const low = name.toLowerCase();
-  const found = Object.entries(map).find(([k]) => k.toLowerCase() === low);
-  return found ? found[1] : null;
 }
 
 /* ═══════════════════════════════════════════════════════
