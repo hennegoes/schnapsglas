@@ -788,6 +788,86 @@
       display: none; align-items: center; justify-content: center;
     }
     .filter-badge.sichtbar { display: flex; }
+
+    /* ══════════════════════════════════════════
+       FOTO-URL EINGABE
+    ══════════════════════════════════════════ */
+    .foto-tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .foto-tab {
+      flex: 1;
+      background: transparent;
+      border: none;
+      padding: 9px 8px;
+      font-family: 'Lora', serif;
+      font-size: 0.78rem;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.15s;
+      border-right: 1px solid var(--border);
+    }
+    .foto-tab:last-child { border-right: none; }
+    .foto-tab.aktiv { background: rgba(200,134,10,0.1); color: var(--gold-hell); }
+    .foto-tab:hover:not(.aktiv) { background: rgba(255,255,255,0.03); }
+
+    .foto-url-bereich { display: none; }
+    .foto-url-bereich.aktiv { display: block; }
+    .foto-upload-bereich { display: none; }
+    .foto-upload-bereich.aktiv { display: block; }
+
+    .foto-url-vorschau {
+      width: 100%; height: 140px;
+      object-fit: cover;
+      border-radius: 10px;
+      margin-top: 8px;
+      display: none;
+      border: 1px solid var(--border);
+    }
+    .foto-url-vorschau.sichtbar { display: block; }
+    .foto-url-fehler {
+      font-size: 0.72rem; color: #D4A08F;
+      margin-top: 5px; display: none;
+    }
+    .foto-url-fehler.sichtbar { display: block; }
+
+    /* ══════════════════════════════════════════
+       POPUP NAVIGATION (mehrere Gläser)
+    ══════════════════════════════════════════ */
+    .popup-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 14px;
+      border-top: 1px solid var(--border);
+      background: rgba(0,0,0,0.2);
+    }
+    .popup-nav-btn {
+      background: rgba(200,134,10,0.12);
+      border: 1px solid var(--border-gold);
+      border-radius: 8px;
+      color: var(--gold);
+      width: 32px; height: 32px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+    .popup-nav-btn:hover { background: rgba(200,134,10,0.25); }
+    .popup-nav-btn:disabled { opacity: 0.25; cursor: default; }
+    .popup-nav-info {
+      font-size: 0.7rem;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.4;
+    }
+    .popup-nav-info strong { color: var(--gold); font-size: 0.75rem; }
   </style>
 </head>
 <body>
@@ -888,7 +968,7 @@
 ═══════════════════════════════════════════════════════ */
 const CONFIG = {
   // Passwort für den Admin-Bereich
-  passwort: "#Flugzeug24!",
+  passwort: "Flugzeug24",
 
   // Cloudinary – nach Registrierung ausfüllen:
   cloudinary_cloud_name: "dpp3xfy5q",   // z.B. "abc123xyz"
@@ -975,16 +1055,64 @@ function formatDatum(iso) {
    ALLE GLÄSER AUF KARTE SETZEN
 ═══════════════════════════════════════════════════════ */
 function alleGlaeserLaden() {
+  // Gläser nach Koordinaten gruppieren (gleiche lat+lng = gleicher Ort)
+  const gruppen = {};
   GLAESER.forEach(g => {
-    const m = L.marker([g.lat, g.lng], { icon: markerIcon(g.kategorie) })
+    const key = `${g.lat},${g.lng}`;
+    if (!gruppen[key]) gruppen[key] = [];
+    gruppen[key].push(g);
+  });
+
+  // Pro Gruppe einen Marker setzen
+  Object.values(gruppen).forEach(gruppe => {
+    const erstesGlas  = gruppe[0];
+    const kat         = gruppe.length === 1 ? erstesGlas.kategorie : null; // bei mehreren: kein Farbmarker
+    const m = L.marker([erstesGlas.lat, erstesGlas.lng], { icon: markerIcon(kat) })
       .addTo(map)
-      .bindPopup(popupHTML(g), { maxWidth: 280, minWidth: 280 });
-    markerMap[g.id] = m;
+      .bindPopup(gruppenPopupHTML(gruppe, 0), { maxWidth: 300, minWidth: 300 });
+
+    // Alle IDs dieser Gruppe auf denselben Marker zeigen
+    gruppe.forEach(g => { markerMap[g.id] = m; });
   });
 
   const n = GLAESER.length;
   document.getElementById("zaehler").textContent =
     n + (n === 1 ? " Glas" : " Gläser");
+}
+
+/* ── Popup-HTML für eine Gruppe (mit Navigation) ── */
+function gruppenPopupHTML(gruppe, index) {
+  const g = gruppe[index];
+  const gesamt = gruppe.length;
+
+  const nav = gesamt > 1 ? `
+    <div class="popup-nav">
+      <button class="popup-nav-btn"
+        ${index === 0 ? "disabled" : ""}
+        onclick="popupNavigation(this, ${JSON.stringify(gruppe.map(x=>x.id)).replace(/"/g,"'")}, ${index - 1})">◀</button>
+      <div class="popup-nav-info">
+        <strong>${index + 1} / ${gesamt}</strong><br>
+        ${gesamt} Gläser an diesem Ort
+      </div>
+      <button class="popup-nav-btn"
+        ${index === gesamt - 1 ? "disabled" : ""}
+        onclick="popupNavigation(this, ${JSON.stringify(gruppe.map(x=>x.id)).replace(/"/g,"'")}, ${index + 1})">▶</button>
+    </div>` : "";
+
+  return `<div>${popupHTML(g)}${nav}</div>`;
+}
+
+/* ── Navigation im Popup weiterschalten ── */
+function popupNavigation(btn, idsJson, neuerIndex) {
+  // IDs aus dem onclick-Attribut parsen
+  const ids   = JSON.parse(idsJson.replace(/'/g, '"'));
+  const gruppe = ids.map(id => GLAESER.find(g => g.id === id)).filter(Boolean);
+  if (!gruppe.length) return;
+
+  // Marker dieses Glases finden und Popup aktualisieren
+  const m = markerMap[gruppe[0].id];
+  if (!m) return;
+  m.setPopupContent(gruppenPopupHTML(gruppe, neuerIndex));
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -1080,17 +1208,36 @@ function formularOeffnen() {
     <div class="form-section">📸 Foto</div>
 
     <div class="form-group">
-      <div class="foto-upload-area" id="foto-area" onclick="document.getElementById('foto-input').click()">
-        <div class="foto-placeholder" id="foto-placeholder">
-          <span class="icon">📷</span>
-          <p>Foto aufnehmen oder aus Galerie wählen</p>
-          <span>JPG, PNG – max. 10 MB</span>
-        </div>
-        <img class="foto-preview" id="foto-preview" style="display:none">
-        <span class="foto-change" id="foto-change" style="display:none">Foto ändern</span>
+      <div class="foto-tabs">
+        <button class="foto-tab aktiv" onclick="fotoTabWechseln('upload', this)">📷 Kamera / Galerie</button>
+        <button class="foto-tab"       onclick="fotoTabWechseln('url', this)">🌐 Link aus Internet</button>
       </div>
-      <input type="file" id="foto-input" accept="image/*" capture="environment"
-             onchange="fotoGewaehlt(this)">
+
+      <!-- Tab 1: Datei-Upload -->
+      <div class="foto-upload-bereich aktiv" id="foto-upload-bereich">
+        <div class="foto-upload-area" id="foto-area" onclick="document.getElementById('foto-input').click()">
+          <div class="foto-placeholder" id="foto-placeholder">
+            <span class="icon">📷</span>
+            <p>Foto aufnehmen oder aus Galerie wählen</p>
+            <span>JPG, PNG – max. 10 MB</span>
+          </div>
+          <img class="foto-preview" id="foto-preview" style="display:none">
+          <span class="foto-change" id="foto-change" style="display:none">Foto ändern</span>
+        </div>
+        <input type="file" id="foto-input" accept="image/*" capture="environment"
+               onchange="fotoGewaehlt(this)">
+      </div>
+
+      <!-- Tab 2: URL -->
+      <div class="foto-url-bereich" id="foto-url-bereich">
+        <input type="url" id="f-foto-url" placeholder="https://upload.wikimedia.org/..."
+               oninput="fotoUrlVorschau(this.value)">
+        <div class="coord-hint" style="margin-top:5px">
+          💡 Wikipedia: Bild öffnen → Rechtsklick → "Bildadresse kopieren"
+        </div>
+        <img class="foto-url-vorschau" id="foto-url-vorschau" alt="Vorschau">
+        <div class="foto-url-fehler" id="foto-url-fehler">⚠ Bild konnte nicht geladen werden. URL prüfen.</div>
+      </div>
     </div>
 
     <div class="form-section">🏷 Kategorie</div>
@@ -1105,6 +1252,11 @@ function formularOeffnen() {
     </div>
 
     <div class="form-section">📍 Ort</div>
+
+    <div class="form-group">
+      <label>Ort &amp; Name <span class="req">*</span></label>
+      <input type="text" id="f-name" placeholder="z.B. Berlin, Deutschland">
+    </div>
 
     <div class="form-group">
       <label>Land (kurz) <span class="req">*</span></label>
@@ -1199,8 +1351,10 @@ async function glasHinzufuegen() {
   const btn = document.getElementById("submit-btn");
   btn.disabled = true;
 
-  // Foto hochladen falls vorhanden
-  let fotoUrl = null;
+  // Foto hochladen falls vorhanden, sonst URL nutzen
+  let fotoUrl  = null;
+  let fotoIsUrl = false;
+  const fotoUrlEingabe = document.getElementById("f-foto-url")?.value.trim() || "";
 
   if (aktuellesFoto) {
     // Cloudinary noch nicht konfiguriert?
@@ -1218,25 +1372,25 @@ async function glasHinzufuegen() {
         zeigeFeedback("form-feedback", "Foto-Upload fehlgeschlagen. Glas wird ohne Foto gespeichert.", "err");
       }
     }
+  } else if (fotoUrlEingabe) {
+    fotoUrl   = fotoUrlEingabe;
+    fotoIsUrl = true;
   }
 
   // Neues Glas-Objekt
   const glas = {
     id: naechsteId++,
     name, land, lat, lng,
-    foto: fotoUrl,
+    foto:    fotoUrl,
+    fotoUrl: fotoIsUrl ? fotoUrl : null,
     text, datum, kategorie
   };
 
   // Zu GLAESER-Array hinzufügen
   GLAESER.push(glas);
 
-  // Marker auf Karte setzen
-  const neuerMarker = L.marker([lat, lng], { icon: markerIcon(glas.kategorie) })
-    .addTo(map)
-    .bindPopup(popupHTML(glas), { maxWidth: 280, minWidth: 280 })
-    .openPopup();
-  markerMap[glas.id] = neuerMarker;
+  // Marker setzen – falls schon Gläser an gleichen Koordinaten existieren, Gruppe aktualisieren
+  markerAktualisieren(lat, lng);
 
   // Karte hinfliegen
   map.flyTo([lat, lng], Math.max(map.getZoom(), 6), { duration: 1.2 });
@@ -1340,6 +1494,7 @@ function generiereDataJs() {
       `    lat:       ${g.lat},`,
       `    lng:       ${g.lng},`,
       `    foto:      ${g.foto ? JSON.stringify(g.foto) : "null"},`,
+      `    fotoUrl:   ${g.fotoUrl ? JSON.stringify(g.fotoUrl) : "null"},`,
       `    text:      ${JSON.stringify(g.text)},`,
       `    datum:     ${g.datum ? JSON.stringify(g.datum) : "null"},`,
       `    kategorie: ${g.kategorie ? JSON.stringify(g.kategorie) : "null"}`,
@@ -1452,22 +1607,44 @@ function glasBearbeitenOeffnen(id) {
 
     <div class="form-section">📸 Foto</div>
     <div class="form-group">
-      <div class="foto-upload-area ${g.foto ? "has-foto" : ""}"
-           id="foto-area" onclick="document.getElementById('foto-input').click()">
-        <div class="foto-placeholder" id="foto-placeholder"
-             style="${g.foto ? "display:none" : ""}">
-          <span class="icon">📷</span>
-          <p>Foto aufnehmen oder aus Galerie wählen</p>
-          <span>JPG, PNG – max. 10 MB</span>
-        </div>
-        <img class="foto-preview" id="foto-preview"
-             src="${g.foto || ""}"
-             style="${g.foto ? "" : "display:none"}">
-        <span class="foto-change" id="foto-change"
-              style="${g.foto ? "" : "display:none"}">Foto ändern</span>
+      <div class="foto-tabs">
+        <button class="foto-tab ${!g.fotoUrl ? "aktiv" : ""}" onclick="fotoTabWechseln('upload', this)">📷 Kamera / Galerie</button>
+        <button class="foto-tab ${g.fotoUrl  ? "aktiv" : ""}" onclick="fotoTabWechseln('url', this)">🌐 Link aus Internet</button>
       </div>
-      <input type="file" id="foto-input" accept="image/*" capture="environment"
-             onchange="fotoGewaehlt(this)">
+
+      <!-- Tab 1: Datei-Upload -->
+      <div class="foto-upload-bereich ${!g.fotoUrl ? "aktiv" : ""}" id="foto-upload-bereich">
+        <div class="foto-upload-area ${(g.foto && !g.fotoUrl) ? "has-foto" : ""}"
+             id="foto-area" onclick="document.getElementById('foto-input').click()">
+          <div class="foto-placeholder" id="foto-placeholder"
+               style="${(g.foto && !g.fotoUrl) ? "display:none" : ""}">
+            <span class="icon">📷</span>
+            <p>Foto aufnehmen oder aus Galerie wählen</p>
+            <span>JPG, PNG – max. 10 MB</span>
+          </div>
+          <img class="foto-preview" id="foto-preview"
+               src="${(g.foto && !g.fotoUrl) ? g.foto : ""}"
+               style="${(g.foto && !g.fotoUrl) ? "" : "display:none"}">
+          <span class="foto-change" id="foto-change"
+                style="${(g.foto && !g.fotoUrl) ? "" : "display:none"}">Foto ändern</span>
+        </div>
+        <input type="file" id="foto-input" accept="image/*" capture="environment"
+               onchange="fotoGewaehlt(this)">
+      </div>
+
+      <!-- Tab 2: URL -->
+      <div class="foto-url-bereich ${g.fotoUrl ? "aktiv" : ""}" id="foto-url-bereich">
+        <input type="url" id="f-foto-url"
+               value="${esc(g.fotoUrl || "")}"
+               placeholder="https://upload.wikimedia.org/..."
+               oninput="fotoUrlVorschau(this.value)">
+        <div class="coord-hint" style="margin-top:5px">
+          💡 Wikipedia: Bild öffnen → Rechtsklick → "Bildadresse kopieren"
+        </div>
+        <img class="foto-url-vorschau ${g.fotoUrl ? "sichtbar" : ""}" id="foto-url-vorschau"
+             src="${esc(g.fotoUrl || "")}" alt="Vorschau">
+        <div class="foto-url-fehler" id="foto-url-fehler">⚠ Bild konnte nicht geladen werden. URL prüfen.</div>
+      </div>
     </div>
 
     <div class="form-section">🏷 Kategorie</div>
@@ -1481,6 +1658,9 @@ function glasBearbeitenOeffnen(id) {
     </div>
 
     <div class="form-section">📍 Ort</div>
+    <div class="form-group">
+      <label>Ort &amp; Name <span class="req">*</span></label>
+      <input type="text" id="f-name" value="${esc(g.name)}" placeholder="z.B. Berlin, Deutschland">
     </div>
     <div class="form-group">
       <label>Land (kurz) <span class="req">*</span></label>
@@ -1547,9 +1727,13 @@ async function glasSpeichern(id) {
   const btn = document.getElementById("submit-btn");
   btn.disabled = true;
 
-  // Foto: neues hochladen oder altes behalten
-  let fotoUrl = GLAESER[idx].foto;
+  // Foto: neues hochladen, URL nutzen, oder altes behalten
+  let fotoUrl   = GLAESER[idx].foto;
+  let fotoIsUrl = !!GLAESER[idx].fotoUrl;
+  const fotoUrlEingabe = document.getElementById("f-foto-url")?.value.trim() || "";
+
   if (aktuellesFoto) {
+    fotoIsUrl = false;
     if (CONFIG.cloudinary_cloud_name === "DEIN_CLOUD_NAME") {
       zeigeFeedback("form-feedback", "⚠ Cloudinary nicht eingerichtet. Foto wird nicht aktualisiert.", "err");
     } else {
@@ -1559,20 +1743,21 @@ async function glasSpeichern(id) {
       if (neueFotoUrl) fotoUrl = neueFotoUrl;
       else zeigeFeedback("form-feedback", "Foto-Upload fehlgeschlagen. Altes Foto bleibt.", "err");
     }
+  } else if (fotoUrlEingabe) {
+    fotoUrl   = fotoUrlEingabe;
+    fotoIsUrl = true;
   }
 
-  // Daten aktualisieren
-  GLAESER[idx] = { id, name, land, lat, lng, foto: fotoUrl, text, datum, kategorie };
+  // Alte Koordinaten merken, dann Daten aktualisieren
+  const alterLat = GLAESER[idx].lat;
+  const alterLng = GLAESER[idx].lng;
+  GLAESER[idx] = { id, name, land, lat, lng, foto: fotoUrl, fotoUrl: fotoIsUrl ? fotoUrl : null, text, datum, kategorie };
 
-  // Alten Marker entfernen & neuen setzen
-  if (markerMap[id]) {
-    map.removeLayer(markerMap[id]);
-    delete markerMap[id];
+  // Marker aktualisieren – bei Koordinatenänderung auch alten Ort neu rendern
+  markerAktualisieren(lat, lng);
+  if (alterLat !== lat || alterLng !== lng) {
+    markerAktualisieren(alterLat, alterLng);
   }
-  const neuerMarker = L.marker([lat, lng], { icon: markerIcon(kategorie) })
-    .addTo(map)
-    .bindPopup(popupHTML(GLAESER[idx]), { maxWidth: 280, minWidth: 280 });
-  markerMap[id] = neuerMarker;
 
   // Zähler (Anzahl bleibt gleich, aber aktualisieren)
   const n = GLAESER.length;
@@ -1590,21 +1775,20 @@ function glasLoeschen(id) {
   if (!g) return;
   if (!confirm(`"${g.name}" wirklich löschen?`)) return;
 
-  // Marker von der Karte entfernen
-  if (markerMap[id]) {
-    map.removeLayer(markerMap[id]);
-    delete markerMap[id];
-  }
+  const { lat, lng } = g;
 
   // Aus Array entfernen
   const idx = GLAESER.findIndex(g => g.id === id);
   if (idx >= 0) GLAESER.splice(idx, 1);
 
+  // Marker dieser Gruppe neu rendern (oder entfernen wenn leer)
+  markerAktualisieren(lat, lng);
+  if (markerMap[id]) delete markerMap[id];
+
   // Zähler aktualisieren
   const n = GLAESER.length;
   document.getElementById("zaehler").textContent = n + (n === 1 ? " Glas" : " Gläser");
 
-  // Liste neu laden (damit die Karte aktuell bleibt)
   listeOeffnen();
 }
 
@@ -1951,6 +2135,88 @@ function filterZuruecksetzen() {
 
   const n = GLAESER.length;
   document.getElementById("zaehler").textContent = n + (n === 1 ? " Glas" : " Gläser");
+}
+
+/* ═══════════════════════════════════════════════════════
+   MARKER AKTUALISIEREN
+   Zeichnet den Marker für einen Ort neu (nach Add/Edit/Delete).
+   Entfernt alle alten Marker dieser Gruppe und setzt einen neuen.
+═══════════════════════════════════════════════════════ */
+function markerAktualisieren(lat, lng) {
+  const key    = `${lat},${lng}`;
+  const gruppe = GLAESER.filter(g => `${g.lat},${g.lng}` === key);
+
+  // Alle alten Marker dieses Ortes von der Karte nehmen
+  const bereitsEntfernt = new Set();
+  GLAESER.forEach(g => {
+    if (markerMap[g.id] && !bereitsEntfernt.has(g.id)) {
+      const gKey = `${g.lat},${g.lng}`;
+      if (gKey === key) {
+        map.removeLayer(markerMap[g.id]);
+        bereitsEntfernt.add(g.id);
+      }
+    }
+  });
+  // Auch Marker von bereits gelöschten Gläsern aufräumen
+  Object.keys(markerMap).forEach(id => {
+    if (!bereitsEntfernt.has(Number(id))) {
+      // prüfen ob dieser Marker zum gleichen Ort gehört
+      const pos = markerMap[id].getLatLng?.();
+      if (pos && Math.abs(pos.lat - lat) < 0.0001 && Math.abs(pos.lng - lng) < 0.0001) {
+        map.removeLayer(markerMap[id]);
+        delete markerMap[id];
+      }
+    }
+  });
+
+  if (gruppe.length === 0) return;
+
+  // Marker-Farbe: bei Einzelglas Kategorie-Farbe, bei Gruppe neutral (gold)
+  const kat = gruppe.length === 1 ? gruppe[0].kategorie : null;
+  const m   = L.marker([lat, lng], { icon: markerIcon(kat) })
+    .addTo(map)
+    .bindPopup(gruppenPopupHTML(gruppe, 0), { maxWidth: 300, minWidth: 300 });
+
+  gruppe.forEach(g => { markerMap[g.id] = m; });
+}
+
+/* ═══════════════════════════════════════════════════════
+   FOTO TAB WECHSELN (Kamera ↔ URL)
+═══════════════════════════════════════════════════════ */
+function fotoTabWechseln(tab, btn) {
+  // Alle Tabs deaktivieren
+  btn.closest(".foto-tabs").querySelectorAll(".foto-tab").forEach(t => t.classList.remove("aktiv"));
+  btn.classList.add("aktiv");
+
+  const uploadBereich = document.getElementById("foto-upload-bereich");
+  const urlBereich    = document.getElementById("foto-url-bereich");
+
+  if (tab === "upload") {
+    uploadBereich?.classList.add("aktiv");
+    urlBereich?.classList.remove("aktiv");
+  } else {
+    urlBereich?.classList.add("aktiv");
+    uploadBereich?.classList.remove("aktiv");
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   FOTO URL VORSCHAU
+═══════════════════════════════════════════════════════ */
+function fotoUrlVorschau(url) {
+  const vorschau = document.getElementById("foto-url-vorschau");
+  const fehler   = document.getElementById("foto-url-fehler");
+  if (!vorschau) return;
+
+  if (!url) {
+    vorschau.classList.remove("sichtbar");
+    fehler?.classList.remove("sichtbar");
+    return;
+  }
+
+  vorschau.onload  = () => { vorschau.classList.add("sichtbar"); fehler?.classList.remove("sichtbar"); };
+  vorschau.onerror = () => { vorschau.classList.remove("sichtbar"); fehler?.classList.add("sichtbar"); };
+  vorschau.src = url;
 }
 
 /* ═══════════════════════════════════════════════════════
