@@ -1119,8 +1119,14 @@ function markerIcon(kategorie, foto) {
    POPUP HTML
 ═══════════════════════════════════════════════════════ */
 function popupHTML(g) {
-  const img = g.foto
-    ? `<img class="popup-img" src="${g.foto}" alt="${esc(g.name)}">`
+  // Popup zeigt das hochgeladene Foto (foto) — nicht das Pin-Bild (fotoUrl)
+  // Nur wenn kein hochgeladenes Foto vorhanden ist, fotoUrl als Fallback
+  const popupFoto = (g.foto && !g.fotoUrl) ? g.foto   // hochgeladen via Cloudinary
+                  : (g.foto &&  g.fotoUrl) ? g.foto   // beide vorhanden → eigenes Foto bevorzugen
+                  : null;                              // nur fotoUrl → kein Bild im Popup
+
+  const img = popupFoto
+    ? `<img class="popup-img" src="${popupFoto}" alt="${esc(g.name)}">`
     : `<div class="popup-no-img">🥃</div>`;
 
   const datum = g.datum
@@ -1165,14 +1171,14 @@ function alleGlaeserLaden() {
 
   // Pro Gruppe einen Marker setzen
   Object.values(gruppen).forEach(gruppe => {
-    const erstesGlas  = gruppe[0];
-    const kat  = gruppe.length === 1 ? erstesGlas.kategorie : null;
-    const foto = erstesGlas.foto || null;
-    const m = L.marker([erstesGlas.lat, erstesGlas.lng], { icon: markerIcon(kat, foto) })
+    const erstesGlas = gruppe[0];
+    const kat        = gruppe.length === 1 ? erstesGlas.kategorie : null;
+    // Pin zeigt immer das fotoUrl (Internet-Bild), nie das hochgeladene Foto
+    const pinFoto    = erstesGlas.fotoUrl || null;
+    const m = L.marker([erstesGlas.lat, erstesGlas.lng], { icon: markerIcon(kat, pinFoto) })
       .addTo(map)
       .bindPopup(gruppenPopupHTML(gruppe, 0), { maxWidth: 300, minWidth: 300 });
 
-    // Alle IDs dieser Gruppe auf denselben Marker zeigen
     gruppe.forEach(g => { markerMap[g.id] = m; });
   });
 
@@ -1452,38 +1458,32 @@ async function glasHinzufuegen() {
   const btn = document.getElementById("submit-btn");
   btn.disabled = true;
 
-  // Foto hochladen falls vorhanden, sonst URL nutzen
-  let fotoUrl  = null;
-  let fotoIsUrl = false;
+  // Hochgeladenes Foto → Cloudinary → wird in `foto` gespeichert
+  // Internet-URL → wird in `fotoUrl` gespeichert (unabhängig)
+  let cloudinaryFoto = null;
   const fotoUrlEingabe = document.getElementById("f-foto-url")?.value.trim() || "";
 
   if (aktuellesFoto) {
-    // Cloudinary noch nicht konfiguriert?
     if (CONFIG.cloudinary_cloud_name === "DEIN_CLOUD_NAME") {
       zeigeFeedback("form-feedback",
-        "⚠ Cloudinary noch nicht eingerichtet. Schau in die Anleitung (setup.html). Das Glas wird ohne Foto gespeichert.",
+        "⚠ Cloudinary noch nicht eingerichtet. Das Glas wird ohne eigenes Foto gespeichert.",
         "err");
-      fotoUrl = null;
     } else {
       document.getElementById("upload-progress").classList.add("active");
-      fotoUrl = await fotoHochladen(aktuellesFoto.blob);
+      cloudinaryFoto = await fotoHochladen(aktuellesFoto.blob);
       document.getElementById("upload-progress").classList.remove("active");
-
-      if (!fotoUrl) {
+      if (!cloudinaryFoto) {
         zeigeFeedback("form-feedback", "Foto-Upload fehlgeschlagen. Glas wird ohne Foto gespeichert.", "err");
       }
     }
-  } else if (fotoUrlEingabe) {
-    fotoUrl   = fotoUrlEingabe;
-    fotoIsUrl = true;
   }
 
   // Neues Glas-Objekt
   const glas = {
     id: naechsteId++,
     name, land, lat, lng,
-    foto:    fotoUrl,
-    fotoUrl: fotoIsUrl ? fotoUrl : null,
+    foto:    cloudinaryFoto,          // eigenes hochgeladenes Bild → Popup
+    fotoUrl: fotoUrlEingabe || null,  // Internet-URL → Pin
     text, datum, kategorie
   };
 
@@ -1890,31 +1890,29 @@ async function glasSpeichern(id) {
   const btn = document.getElementById("submit-btn");
   btn.disabled = true;
 
-  // Foto: neues hochladen, URL nutzen, oder altes behalten
-  let fotoUrl   = GLAESER[idx].foto;
-  let fotoIsUrl = !!GLAESER[idx].fotoUrl;
+  // Hochgeladenes Foto → `foto` (Cloudinary), Internet-URL → `fotoUrl` — getrennt
+  let cloudinaryFoto   = GLAESER[idx].foto;   // altes behalten falls kein neues
   const fotoUrlEingabe = document.getElementById("f-foto-url")?.value.trim() || "";
 
   if (aktuellesFoto) {
-    fotoIsUrl = false;
     if (CONFIG.cloudinary_cloud_name === "DEIN_CLOUD_NAME") {
       zeigeFeedback("form-feedback", "⚠ Cloudinary nicht eingerichtet. Foto wird nicht aktualisiert.", "err");
     } else {
       document.getElementById("upload-progress").classList.add("active");
-      const neueFotoUrl = await fotoHochladen(aktuellesFoto.blob);
+      const neu = await fotoHochladen(aktuellesFoto.blob);
       document.getElementById("upload-progress").classList.remove("active");
-      if (neueFotoUrl) fotoUrl = neueFotoUrl;
+      if (neu) cloudinaryFoto = neu;
       else zeigeFeedback("form-feedback", "Foto-Upload fehlgeschlagen. Altes Foto bleibt.", "err");
     }
-  } else if (fotoUrlEingabe) {
-    fotoUrl   = fotoUrlEingabe;
-    fotoIsUrl = true;
   }
 
   // Alte Koordinaten merken, dann Daten aktualisieren
   const alterLat = GLAESER[idx].lat;
   const alterLng = GLAESER[idx].lng;
-  GLAESER[idx] = { id, name, land, lat, lng, foto: fotoUrl, fotoUrl: fotoIsUrl ? fotoUrl : null, text, datum, kategorie };
+  GLAESER[idx] = { id, name, land, lat, lng,
+    foto:    cloudinaryFoto,          // eigenes Bild → Popup
+    fotoUrl: fotoUrlEingabe || null,  // Internet-URL → Pin
+    text, datum, kategorie };
 
   // Marker aktualisieren – bei Koordinatenänderung auch alten Ort neu rendern
   markerAktualisieren(lat, lng);
@@ -2060,8 +2058,8 @@ function csvImportieren(input) {
         const glas = {
           id:    naechsteId++,
           name, land, lat, lng,
-          foto:     fotoUrl || null,
-          fotoUrl:  fotoUrl || null,
+          foto:     null,              // CSV hat kein hochgeladenes Foto
+          fotoUrl:  fotoUrl || null,   // Internet-URL → Pin
           text,
           datum: datumFormatiert || null,
           kategorie: ["gekauft","geschenkt"].includes(kategorie) ? kategorie : null
@@ -2341,9 +2339,9 @@ function markerAktualisieren(lat, lng) {
 
   if (gruppe.length === 0) return;
 
-  const kat  = gruppe.length === 1 ? gruppe[0].kategorie : null;
-  const foto = gruppe[0].foto || null;
-  const m   = L.marker([lat, lng], { icon: markerIcon(kat, foto) })
+  const kat     = gruppe.length === 1 ? gruppe[0].kategorie : null;
+  const pinFoto = gruppe[0].fotoUrl || null;   // Pin zeigt immer das Internet-Bild
+  const m       = L.marker([lat, lng], { icon: markerIcon(kat, pinFoto) })
     .addTo(map)
     .bindPopup(gruppenPopupHTML(gruppe, 0), { maxWidth: 300, minWidth: 300 });
 
