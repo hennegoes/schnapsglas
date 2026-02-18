@@ -958,6 +958,216 @@
       line-height: 1.4;
     }
     .popup-nav-info strong { color: var(--gold); font-size: 0.75rem; }
+    /* ══════════════════════════════════════════
+       STATISTIK-PANEL (von links)
+    ══════════════════════════════════════════ */
+    #stats-panel {
+      position: fixed;
+      top: 54px; left: 0; bottom: 0;
+      width: min(360px, 95vw);
+      background: var(--panel);
+      border-right: 1px solid var(--border-gold);
+      z-index: 700;
+      display: flex; flex-direction: column;
+      transform: translateX(-100%);
+      transition: transform 0.35s cubic-bezier(0.32,0.72,0,1);
+      box-shadow: 4px 0 32px rgba(0,0,0,0.6);
+    }
+    #stats-panel.offen { transform: translateX(0); }
+
+    .stats-header {
+      padding: 16px 18px 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .stats-header-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.05rem; color: var(--gold-hell);
+    }
+    .stats-close {
+      background: transparent; border: 1px solid var(--border);
+      color: var(--muted); width: 28px; height: 28px;
+      border-radius: 50%; cursor: pointer; font-size: 14px;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s;
+    }
+    .stats-close:hover { color: var(--hell); border-color: var(--border-gold); }
+
+    .stats-body {
+      flex: 1; overflow-y: auto; padding: 16px 18px;
+    }
+    .stats-body::-webkit-scrollbar { width: 3px; }
+    .stats-body::-webkit-scrollbar-thumb { background: var(--border-gold); border-radius: 3px; }
+
+    /* Kennzahlen-Kacheln */
+    .stats-kacheln {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 10px; margin-bottom: 20px;
+    }
+    .stats-kachel {
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-radius: 12px; padding: 14px 12px;
+      text-align: center;
+    }
+    .stats-kachel-zahl {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.8rem; color: var(--gold-hell);
+      line-height: 1;
+    }
+    .stats-kachel-label {
+      font-size: 0.65rem; color: var(--muted);
+      letter-spacing: 1.5px; text-transform: uppercase;
+      margin-top: 5px;
+    }
+
+    /* Abschnitt-Titel */
+    .stats-section {
+      font-size: 0.6rem; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--gold); margin-bottom: 12px; margin-top: 20px;
+      padding-bottom: 5px; border-bottom: 1px solid var(--border);
+    }
+    .stats-section:first-of-type { margin-top: 0; }
+
+    /* Kategorie-Balken */
+    .stats-kat-row {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+    }
+    .stats-kat-label { font-size: 0.8rem; width: 90px; flex-shrink: 0; }
+    .stats-kat-bar-wrap {
+      flex: 1; height: 8px; background: var(--border);
+      border-radius: 4px; overflow: hidden;
+    }
+    .stats-kat-bar {
+      height: 100%; border-radius: 4px;
+      transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+    }
+    .stats-kat-bar.gekauft  { background: #3B82F6; }
+    .stats-kat-bar.geschenkt { background: #EA580C; }
+    .stats-kat-zahl { font-size: 0.78rem; color: var(--muted); width: 24px; text-align: right; }
+
+    /* Zeitstrahl */
+    .stats-zeitstrahl { display: flex; align-items: flex-end; gap: 5px; height: 80px; }
+    .stats-jahr-col {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; gap: 4px;
+    }
+    .stats-jahr-balken-wrap {
+      flex: 1; width: 100%; display: flex;
+      align-items: flex-end; justify-content: center;
+    }
+    .stats-jahr-balken {
+      width: 100%; border-radius: 4px 4px 0 0;
+      background: var(--gold);
+      min-height: 3px;
+      transition: height 0.6s cubic-bezier(0.4,0,0.2,1);
+      position: relative; cursor: default;
+    }
+    .stats-jahr-balken:hover { background: var(--gold-hell); }
+    .stats-jahr-balken-tip {
+      position: absolute; bottom: 100%; left: 50%;
+      transform: translateX(-50%);
+      background: var(--panel2); border: 1px solid var(--border-gold);
+      border-radius: 6px; padding: 3px 8px;
+      font-size: 0.65rem; color: var(--hell);
+      white-space: nowrap; pointer-events: none;
+      opacity: 0; transition: opacity 0.15s;
+    }
+    .stats-jahr-balken:hover .stats-jahr-balken-tip { opacity: 1; }
+    .stats-jahr-label { font-size: 0.58rem; color: var(--muted); }
+
+    /* Top-Länder */
+    .stats-land-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 6px 0; border-bottom: 1px solid var(--border);
+    }
+    .stats-land-row:last-child { border-bottom: none; }
+    .stats-land-rang {
+      font-size: 0.75rem; color: var(--muted); width: 18px; flex-shrink: 0;
+    }
+    .stats-land-name { flex: 1; font-size: 0.82rem; color: var(--text); }
+    .stats-land-pips { display: flex; gap: 3px; }
+    .stats-land-pip {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--gold); opacity: 0.8;
+    }
+    .stats-land-zahl {
+      font-size: 0.72rem; color: var(--gold-hell); font-weight: 600;
+    }
+
+    /* Weltkarte (SVG-Heatmap) */
+    .stats-karte-wrap {
+      width: 100%; border-radius: 10px; overflow: hidden;
+      background: var(--panel2); border: 1px solid var(--border);
+      position: relative;
+    }
+    .stats-karte-wrap svg {
+      width: 100%; height: auto; display: block;
+    }
+    .stats-karte-wrap .land-0 { fill: #1A2035; }
+    .stats-karte-wrap .land-1 { fill: #1E3A6E; }
+    .stats-karte-wrap .land-2 { fill: #1D4ED8; }
+    .stats-karte-wrap .land-3 { fill: #2563EB; }
+    .stats-karte-wrap .land-4 { fill: #3B82F6; }
+    .stats-karte-wrap .land-5 { fill: #60A5FA; }
+    .stats-karte-wrap path { stroke: #0A0F1A; stroke-width: 0.3; }
+    .stats-karte-legende {
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 10px; font-size: 0.65rem; color: var(--muted);
+    }
+    .stats-karte-legende-grad {
+      flex: 1; height: 6px; border-radius: 3px;
+      background: linear-gradient(to right, #1A2035, #60A5FA);
+    }
+
+    /* Letztes Glas */
+    .stats-letztes {
+      background: var(--panel2); border: 1px solid var(--border);
+      border-radius: 10px; padding: 12px 14px;
+      display: flex; gap: 12px; align-items: center;
+    }
+    .stats-letztes-foto {
+      width: 44px; height: 44px; border-radius: 8px;
+      object-fit: cover; flex-shrink: 0;
+      background: var(--border); display: flex;
+      align-items: center; justify-content: center; font-size: 20px;
+    }
+    .stats-letztes-foto img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
+    .stats-letztes-info { flex: 1; min-width: 0; }
+    .stats-letztes-name {
+      font-size: 0.85rem; color: var(--hell);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .stats-letztes-sub { font-size: 0.68rem; color: var(--muted); margin-top: 3px; }
+
+    /* Teilen-Button im Popup */
+    .popup-share-btn {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      width: 100%; padding: 8px;
+      background: transparent; border: none;
+      border-top: 1px solid var(--border);
+      color: var(--muted); font-family: 'Lora', serif;
+      font-size: 0.72rem; cursor: pointer;
+      transition: all 0.15s;
+    }
+    .popup-share-btn:hover { color: var(--gold-hell); background: rgba(59,130,246,0.05); }
+    .popup-share-btn.kopiert { color: var(--green); }
+
+    /* Toast-Nachricht */
+    #toast {
+      position: fixed; bottom: 30px; left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--panel2); border: 1px solid var(--border-gold);
+      border-radius: 10px; padding: 10px 20px;
+      font-size: 0.82rem; color: var(--hell);
+      z-index: 2000; pointer-events: none;
+      opacity: 0; transition: all 0.3s;
+      white-space: nowrap;
+    }
+    #toast.sichtbar {
+      opacity: 1; transform: translateX(-50%) translateY(0);
+    }
   </style>
 </head>
 <body>
@@ -998,6 +1208,13 @@
 
 <!-- ══ HAMBURGER DROPDOWN ══ -->
 <div id="nav-dropdown">
+  <button class="nav-item" onclick="statistikOeffnen(); menuSchliessen()">
+    <span class="nav-icon">📊</span>
+    <span class="nav-item-label">
+      Statistiken
+      <span class="nav-item-sub">Übersicht, Heatmap & Zeitstrahl</span>
+    </span>
+  </button>
   <button class="nav-item" onclick="adminOeffnen(); menuSchliessen()">
     <span class="nav-icon">🔐</span>
     <span class="nav-item-label">
@@ -1031,6 +1248,20 @@
 <!-- Klick außerhalb schließt Menü -->
 <div id="menu-backdrop" onclick="menuSchliessen()"
      style="display:none; position:fixed; inset:0; z-index:840;"></div>
+
+<!-- ══ STATISTIK-PANEL ══ -->
+<div id="stats-panel">
+  <div class="stats-header">
+    <div class="stats-header-title">📊 Statistiken</div>
+    <button class="stats-close" onclick="statistikSchliessen()">✕</button>
+  </div>
+  <div class="stats-body" id="stats-body">
+    <!-- wird dynamisch befüllt -->
+  </div>
+</div>
+
+<!-- ══ TOAST ══ -->
+<div id="toast"></div>
 
 <!-- ══ FILTER PANEL ══ -->
 <div id="filter-panel">
@@ -1176,6 +1407,9 @@ function popupHTML(g) {
       ${datum}
       <div class="popup-text">${esc(g.text)}</div>
     </div>
+    <button class="popup-share-btn" data-share-id="${g.id}" onclick="glasTeilen(${g.id}, this)">
+      🔗 Link zu diesem Glas kopieren
+    </button>
   </div>`;
 }
 
@@ -1235,45 +1469,51 @@ function gruppeKanonisch(gruppe) {
 }
 
 function gruppenPopupHTML(gruppeRoh, index) {
-  const gruppe  = gruppeKanonisch(gruppeRoh);
-  const g       = gruppe[index];
-  const gesamt  = gruppe.length;
+  const gruppe   = gruppeKanonisch(gruppeRoh);
+  const g        = gruppe[index];
+  const gesamt   = gruppe.length;
   const cacheKey = `${g.lat},${g.lng}`;
 
-  // Gruppe im Cache speichern damit Navigation darauf zugreifen kann
   gruppenCache[cacheKey] = gruppe;
 
   const nav = gesamt > 1 ? `
     <div class="popup-nav">
       <button class="popup-nav-btn"
         ${index === 0 ? "disabled" : ""}
-        onclick="popupNavigieren('${cacheKey}', ${index - 1})">◀</button>
+        data-nav-key="${cacheKey}" data-nav-idx="${index - 1}">◀</button>
       <div class="popup-nav-info">
         <strong>${index + 1} / ${gesamt}</strong><br>
         ${gesamt} Gläser an diesem Ort
       </div>
       <button class="popup-nav-btn"
         ${index === gesamt - 1 ? "disabled" : ""}
-        onclick="popupNavigieren('${cacheKey}', ${index + 1})">▶</button>
+        data-nav-key="${cacheKey}" data-nav-idx="${index + 1}">▶</button>
     </div>` : "";
 
   return `<div>${popupHTML(g)}${nav}</div>`;
 }
 
-/* ── Navigation per Cache-Key — Popup bleibt offen ── */
-function popupNavigieren(cacheKey, neuerIndex) {
-  const gruppe = gruppenCache[cacheKey];
-  if (!gruppe || !gruppe[neuerIndex]) return;
+/* ── Globaler Klick-Handler für Popup-Navigation ── */
+/* Wird einmalig auf document registriert; stopPropagation verhindert
+   dass Leaflet den Klick als "außerhalb Popup" wertet und es schließt. */
+document.addEventListener("click", function(e) {
+  const btn = e.target.closest("[data-nav-key]");
+  if (!btn || btn.disabled) return;
+
+  e.stopPropagation();
+  e.preventDefault();
+
+  const cacheKey  = btn.dataset.navKey;
+  const neuerIdx  = parseInt(btn.dataset.navIdx, 10);
+  const gruppe    = gruppenCache[cacheKey];
+  if (!gruppe || !gruppe[neuerIdx]) return;
 
   const m = markerMap[gruppe[0].id];
   if (!m) return;
 
-  // Popup-Inhalt aktualisieren OHNE zu schließen
-  m.setPopupContent(gruppenPopupHTML(gruppe, neuerIndex));
-
-  // Sicherstellen dass Popup offen bleibt
+  m.setPopupContent(gruppenPopupHTML(gruppe, neuerIdx));
   if (!m.isPopupOpen()) m.openPopup();
-}
+}, true); /* capture:true → fängt Klick VOR Leaflet ab */
 
 /* ═══════════════════════════════════════════════════════
    HAMBURGER MENÜ
@@ -2477,9 +2717,341 @@ function zeigeFeedback(id, text, typ) {
 }
 
 /* ═══════════════════════════════════════════════════════
+   TEILEN-FUNKTION
+═══════════════════════════════════════════════════════ */
+function glasTeilen(id, btn) {
+  const url = `${location.origin}${location.pathname}#glas-${id}`;
+  navigator.clipboard.writeText(url).then(() => {
+    toast("🔗 Link kopiert!");
+    if (btn) {
+      btn.textContent = "✓ Link kopiert!";
+      btn.classList.add("kopiert");
+      setTimeout(() => {
+        btn.textContent = "🔗 Link zu diesem Glas kopieren";
+        btn.classList.remove("kopiert");
+      }, 2500);
+    }
+  }).catch(() => {
+    // Fallback für ältere Browser
+    prompt("Link kopieren:", url);
+  });
+}
+
+function toast(text) {
+  const el = document.getElementById("toast");
+  el.textContent = text;
+  el.classList.add("sichtbar");
+  setTimeout(() => el.classList.remove("sichtbar"), 2500);
+}
+
+/* Beim Laden: URL-Hash prüfen und direkt zum Glas navigieren */
+function urlHashPruefen() {
+  const hash = location.hash;
+  if (!hash.startsWith("#glas-")) return;
+  const id = parseInt(hash.replace("#glas-", ""), 10);
+  const g  = GLAESER.find(g => g.id === id);
+  if (!g) return;
+  const m = markerMap[g.id];
+  if (!m) return;
+  setTimeout(() => {
+    map.setView([g.lat, g.lng], 8, { animate: true });
+    m.openPopup();
+  }, 600);
+}
+
+/* ═══════════════════════════════════════════════════════
+   STATISTIK-PANEL
+═══════════════════════════════════════════════════════ */
+function statistikOeffnen() {
+  const panel = document.getElementById("stats-panel");
+  panel.classList.add("offen");
+  statistikRenern();
+}
+
+function statistikSchliessen() {
+  document.getElementById("stats-panel").classList.remove("offen");
+}
+
+function statistikRenern() {
+  const body = document.getElementById("stats-body");
+  if (!GLAESER.length) {
+    body.innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted);font-style:italic">
+      Noch keine Gläser eingetragen.
+    </div>`;
+    return;
+  }
+
+  const anzahl    = GLAESER.length;
+  const laender   = new Set(GLAESER.map(g => g.land.trim())).size;
+  const gekauft   = GLAESER.filter(g => g.kategorie === "gekauft").length;
+  const geschenkt = GLAESER.filter(g => g.kategorie === "geschenkt").length;
+
+  // Letzte Ergänzung (nach Datum oder Reihenfolge)
+  const mitDatum  = GLAESER.filter(g => g.datum).sort((a,b) => b.datum.localeCompare(a.datum));
+  const letztes   = mitDatum[0] || GLAESER[GLAESER.length - 1];
+
+  // Jahres-Häufigkeit
+  const proJahr = {};
+  GLAESER.forEach(g => {
+    if (g.datum) {
+      const j = g.datum.slice(0,4);
+      proJahr[j] = (proJahr[j] || 0) + 1;
+    }
+  });
+  const jahre     = Object.keys(proJahr).sort();
+  const maxJahr   = Math.max(...Object.values(proJahr));
+
+  // Top-Länder
+  const laenderZahl = {};
+  GLAESER.forEach(g => {
+    const l = g.land.trim();
+    laenderZahl[l] = (laenderZahl[l] || 0) + 1;
+  });
+  const topLaender = Object.entries(laenderZahl)
+    .sort((a,b) => b[1] - a[1]).slice(0, 7);
+
+  // Heatmap Länder-Code-Mapping (ISO 3166-1 alpha-2)
+  const laenderKodiert = {};
+  GLAESER.forEach(g => {
+    const code = laenderZuCode(g.land.trim());
+    if (code) laenderKodiert[code] = (laenderKodiert[code] || 0) + 1;
+  });
+
+  body.innerHTML = `
+    <!-- Kennzahlen -->
+    <div class="stats-kacheln">
+      <div class="stats-kachel">
+        <div class="stats-kachel-zahl">${anzahl}</div>
+        <div class="stats-kachel-label">Gläser</div>
+      </div>
+      <div class="stats-kachel">
+        <div class="stats-kachel-zahl">${laender}</div>
+        <div class="stats-kachel-label">Länder</div>
+      </div>
+      <div class="stats-kachel">
+        <div class="stats-kachel-zahl">${gekauft}</div>
+        <div class="stats-kachel-label">Gekauft</div>
+      </div>
+      <div class="stats-kachel">
+        <div class="stats-kachel-zahl">${geschenkt}</div>
+        <div class="stats-kachel-label">Geschenkt</div>
+      </div>
+    </div>
+
+    <!-- Letzte Ergänzung -->
+    <div class="stats-section">Zuletzt hinzugefügt</div>
+    <div class="stats-letztes">
+      <div class="stats-letztes-foto">
+        ${letztes.foto || letztes.fotoUrl
+          ? `<img src="${letztes.foto || letztes.fotoUrl}" alt="">`
+          : "🥃"}
+      </div>
+      <div class="stats-letztes-info">
+        <div class="stats-letztes-name">${esc(letztes.name)}</div>
+        <div class="stats-letztes-sub">
+          ${esc(letztes.land)}${letztes.datum ? " · " + formatDatum(letztes.datum) : ""}
+        </div>
+      </div>
+    </div>
+
+    <!-- Kategorie-Balken -->
+    ${(gekauft + geschenkt > 0) ? `
+    <div class="stats-section">Gekauft vs. Geschenkt</div>
+    <div class="stats-kat-row">
+      <div class="stats-kat-label" style="color:#60A5FA">✈ Gekauft</div>
+      <div class="stats-kat-bar-wrap">
+        <div class="stats-kat-bar gekauft"
+             style="width:${Math.round(gekauft/anzahl*100)}%"></div>
+      </div>
+      <div class="stats-kat-zahl">${gekauft}</div>
+    </div>
+    <div class="stats-kat-row">
+      <div class="stats-kat-label" style="color:#FB923C">🎁 Geschenkt</div>
+      <div class="stats-kat-bar-wrap">
+        <div class="stats-kat-bar geschenkt"
+             style="width:${Math.round(geschenkt/anzahl*100)}%"></div>
+      </div>
+      <div class="stats-kat-zahl">${geschenkt}</div>
+    </div>` : ""}
+
+    <!-- Zeitstrahl -->
+    ${jahre.length > 1 ? `
+    <div class="stats-section">Gläser pro Jahr</div>
+    <div class="stats-zeitstrahl">
+      ${jahre.map(j => `
+        <div class="stats-jahr-col">
+          <div class="stats-jahr-balken-wrap">
+            <div class="stats-jahr-balken"
+                 style="height:${Math.round(proJahr[j]/maxJahr*100)}%">
+              <div class="stats-jahr-balken-tip">${proJahr[j]} ${proJahr[j]===1?"Glas":"Gläser"}</div>
+            </div>
+          </div>
+          <div class="stats-jahr-label">${j.slice(2)}</div>
+        </div>`).join("")}
+    </div>` : ""}
+
+    <!-- Top Länder -->
+    <div class="stats-section">Top Länder</div>
+    ${topLaender.map(([land, n], i) => `
+      <div class="stats-land-row">
+        <div class="stats-land-rang">${i+1}.</div>
+        <div class="stats-land-name">${esc(land)}</div>
+        <div class="stats-land-pips">
+          ${Array.from({length: Math.min(n,5)}, () =>
+            `<div class="stats-land-pip"></div>`).join("")}
+        </div>
+        <div class="stats-land-zahl">${n}</div>
+      </div>`).join("")}
+
+    <!-- Weltkarte -->
+    <div class="stats-section">Weltkarte</div>
+    <div class="stats-karte-wrap" id="stats-karte">
+      <div style="text-align:center;padding:20px;color:var(--muted);font-size:0.8rem">
+        Wird geladen…
+      </div>
+    </div>
+    <div class="stats-karte-legende">
+      <span>0</span>
+      <div class="stats-karte-legende-grad"></div>
+      <span>Viele</span>
+    </div>
+  `;
+
+  // Weltkarte asynchron laden
+  weltkarteLaden(laenderKodiert);
+}
+
+/* ── Weltkarte als SVG laden und Länder einfärben ── */
+async function weltkarteLaden(laenderKodiert) {
+  const container = document.getElementById("stats-karte");
+  if (!container) return;
+
+  try {
+    // Vereinfachte SVG-Weltkarte von Natural Earth via CDN
+    const res = await fetch("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json");
+    if (!res.ok) throw new Error("Nicht erreichbar");
+    const topo  = await res.json();
+
+    // TopoJSON → GeoJSON Features konvertieren (ohne externe Bibliothek)
+    const laenderFeatures = topojsonZuPfade(topo);
+    const maxWert = Math.max(1, ...Object.values(laenderKodiert));
+
+    const svgPfade = laenderFeatures.map(({code, path}) => {
+      const n     = laenderKodiert[code] || 0;
+      const stufe = n === 0 ? 0 : Math.ceil(n / maxWert * 5);
+      return `<path class="land-${stufe}" d="${path}" title="${code}: ${n}"/>`;
+    }).join("");
+
+    container.innerHTML = `
+      <svg viewBox="0 0 960 500" xmlns="http://www.w3.org/2000/svg">
+        ${svgPfade}
+      </svg>`;
+  } catch(e) {
+    // Fallback: einfache Text-Liste
+    container.innerHTML = `
+      <div style="padding:14px;font-size:0.75rem;color:var(--muted)">
+        🌍 Bereiste Länder:<br><br>
+        ${Object.keys(laenderKodiert).map(c =>
+          `<span style="color:var(--gold-hell);margin-right:8px">${c}</span>`
+        ).join("")}
+      </div>`;
+  }
+}
+
+/* Minimaler TopoJSON-zu-SVG Konverter */
+function topojsonZuPfade(topo) {
+  // Nutzt den eingebauten Path-Generator ohne d3
+  const arcs   = topo.arcs;
+  const scale  = topo.transform?.scale  || [1,1];
+  const transl = topo.transform?.translate || [0,0];
+
+  function arcZuPunkte(arcIdx) {
+    const rev = arcIdx < 0;
+    const pts = arcs[rev ? ~arcIdx : arcIdx];
+    let x = 0, y = 0;
+    return pts.map(([dx, dy]) => {
+      x += dx; y += dy;
+      return [x * scale[0] + transl[0], y * scale[1] + transl[1]];
+    });
+  }
+
+  function projektion([lon, lat]) {
+    // Einfache equirektanguläre Projektion auf 960×500
+    return [
+      (lon + 180) / 360 * 960,
+      (90 - lat) / 180 * 500
+    ];
+  }
+
+  function geometrieZuPfad(geom) {
+    if (!geom) return "";
+    const typen = geom.type === "MultiPolygon" ? geom.arcs : [geom.arcs];
+    return typen.map(poly =>
+      poly.map(ring => {
+        const punkte = ring.flatMap(arcIdx => arcZuPunkte(arcIdx))
+          .map(projektion);
+        return "M" + punkte.map(p => p.map(v => v.toFixed(1)).join(",")).join("L") + "Z";
+      }).join(" ")
+    ).join(" ");
+  }
+
+  const objekte = topo.objects;
+  const features = [];
+  Object.values(objekte).forEach(obj => {
+    (obj.geometries || []).forEach(geom => {
+      const code = geom.properties?.iso_a2 || geom.id || "";
+      const path = geometrieZuPfad(geom);
+      if (path) features.push({ code, path });
+    });
+  });
+  return features;
+}
+
+/* Länder-Name → ISO-Code Mapping (häufigste) */
+function laenderZuCode(name) {
+  const map = {
+    "Deutschland":"DE","Österreich":"AT","Schweiz":"CH","Frankreich":"FR",
+    "Italien":"IT","Spanien":"ES","Portugal":"PT","Niederlande":"NL",
+    "Belgien":"BE","Polen":"PL","Tschechien":"CZ","Ungarn":"HU",
+    "Kroatien":"HR","Griechenland":"GR","Türkei":"TR","Schweden":"SE",
+    "Norwegen":"NO","Dänemark":"DK","Finnland":"FI","Irland":"IE",
+    "Großbritannien":"GB","USA":"US","Kanada":"CA","Mexiko":"MX",
+    "Brasilien":"BR","Argentinien":"AR","Japan":"JP","China":"CN",
+    "Indien":"IN","Australien":"AU","Südafrika":"ZA","Ägypten":"EG",
+    "Marokko":"MA","Thailand":"TH","Vietnam":"VN","Indonesien":"ID",
+    "Malaysia":"MY","Singapur":"SG","Neuseeland":"NZ","Russland":"RU",
+    "Ukraine":"UA","Rumänien":"RO","Bulgarien":"BG","Serbien":"RS",
+    "Slowakei":"SK","Slowenien":"SI","Litauen":"LT","Lettland":"LV",
+    "Estland":"EE","Island":"IS","Luxemburg":"LU","Malta":"MT",
+    "Zypern":"CY","Albanien":"AL","Nordmazedonien":"MK","Bosnien":"BA",
+    "Montenegro":"ME","Kosovo":"XK","Georgien":"GE","Armenien":"AM",
+    "Aserbaidschan":"AZ","Kasachstan":"KZ","Israel":"IL","Jordanien":"JO",
+    "Libanon":"LB","Saudi-Arabien":"SA","VAE":"AE","Katar":"QA",
+    "Oman":"OM","Kuwait":"KW","Iran":"IR","Irak":"IQ","Pakistan":"PK",
+    "Bangladesh":"BD","Sri Lanka":"LK","Nepal":"NP","Myanmar":"MM",
+    "Kambodscha":"KH","Laos":"LA","Philippinen":"PH","Taiwan":"TW",
+    "Südkorea":"KR","Nordkorea":"KP","Mongolei":"MN","Peru":"PE",
+    "Chile":"CL","Kolumbien":"CO","Venezuela":"VE","Ecuador":"EC",
+    "Bolivien":"BO","Paraguay":"PY","Uruguay":"UY","Kuba":"CU",
+    "Jamaica":"JM","Tunesien":"TN","Algerien":"DZ","Libyen":"LY",
+    "Ghana":"GH","Nigeria":"NG","Kenia":"KE","Tansania":"TZ",
+    "Äthiopien":"ET","Uganda":"UG","Mosambik":"MZ","Namibia":"NA",
+    "Botswana":"BW","Zimbabwe":"ZW","Sambia":"ZM","Angola":"AO",
+    "Kamerun":"CM","Elfenbeinküste":"CI","Senegal":"SN","Mali":"ML",
+  };
+  // Direktes Match
+  if (map[name]) return map[name];
+  // Case-insensitive
+  const low = name.toLowerCase();
+  const found = Object.entries(map).find(([k]) => k.toLowerCase() === low);
+  return found ? found[1] : null;
+}
+
+/* ═══════════════════════════════════════════════════════
    START
 ═══════════════════════════════════════════════════════ */
 alleGlaeserLaden();
+urlHashPruefen();
 </script>
 </body>
 </html>
