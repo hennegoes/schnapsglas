@@ -611,6 +611,183 @@
     .glas-aktion-btn.bearbeiten:hover { background: rgba(200,134,10,0.08); }
     .glas-aktion-btn.loeschen { color: var(--red); }
     .glas-aktion-btn.loeschen:hover { background: rgba(148,74,74,0.08); }
+
+    /* ══════════════════════════════════════════
+       KATEGORIE-BADGE im Popup & Liste
+    ══════════════════════════════════════════ */
+    .popup-kategorie {
+      display: inline-flex; align-items: center; gap: 5px;
+      border-radius: 20px; padding: 3px 10px;
+      font-size: 0.62rem; font-weight: 600;
+      letter-spacing: 1px; text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .popup-kategorie.gekauft  { background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.4); color: #7EB8F7; }
+    .popup-kategorie.geschenkt{ background: rgba(234,88,12,0.15);  border: 1px solid rgba(234,88,12,0.4);  color: #FDBA74; }
+
+    .glas-karte-kategorie {
+      display: inline-flex; align-items: center; gap: 4px;
+      border-radius: 12px; padding: 2px 8px;
+      font-size: 0.62rem; font-weight: 600;
+      letter-spacing: 0.5px; margin-top: 3px;
+    }
+    .glas-karte-kategorie.gekauft  { background: rgba(59,130,246,0.12); color: #7EB8F7; }
+    .glas-karte-kategorie.geschenkt{ background: rgba(234,88,12,0.12);  color: #FDBA74; }
+
+    /* ══════════════════════════════════════════
+       MARKER FARBEN
+    ══════════════════════════════════════════ */
+    .marker-pin.gekauft {
+      background: #3B82F6;
+      box-shadow: 0 3px 12px rgba(59,130,246,0.6);
+    }
+    .marker-pin.gekauft:hover {
+      background: #60A5FA;
+      box-shadow: 0 5px 20px rgba(59,130,246,0.8);
+    }
+    .marker-pin.geschenkt {
+      background: #EA580C;
+      box-shadow: 0 3px 12px rgba(234,88,12,0.6);
+    }
+    .marker-pin.geschenkt:hover {
+      background: #FB923C;
+      box-shadow: 0 5px 20px rgba(234,88,12,0.8);
+    }
+
+    /* ══════════════════════════════════════════
+       FILTER-PANEL (von rechts einschieben)
+    ══════════════════════════════════════════ */
+    #filter-panel {
+      position: fixed;
+      top: 54px; right: 0; bottom: 0;
+      width: 300px;
+      background: var(--panel);
+      border-left: 1px solid var(--border-gold);
+      z-index: 700;
+      display: flex; flex-direction: column;
+      transform: translateX(100%);
+      transition: transform 0.3s cubic-bezier(0.32,0.72,0,1);
+      box-shadow: -4px 0 32px rgba(0,0,0,0.5);
+    }
+    #filter-panel.offen { transform: translateX(0); }
+
+    .filter-header {
+      padding: 16px 18px 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .filter-header-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1rem; color: var(--gold-hell);
+    }
+    .filter-close {
+      background: transparent; border: 1px solid var(--border);
+      color: var(--muted); width: 28px; height: 28px;
+      border-radius: 50%; cursor: pointer; font-size: 14px;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s;
+    }
+    .filter-close:hover { color: var(--hell); border-color: var(--border-gold); }
+
+    .filter-body {
+      flex: 1; overflow-y: auto; padding: 16px 18px;
+    }
+    .filter-body::-webkit-scrollbar { width: 3px; }
+    .filter-body::-webkit-scrollbar-thumb { background: var(--border-gold); border-radius: 3px; }
+
+    .filter-section {
+      font-size: 0.6rem; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--gold); margin-bottom: 10px; margin-top: 18px;
+      padding-bottom: 5px; border-bottom: 1px solid var(--border);
+    }
+    .filter-section:first-child { margin-top: 0; }
+
+    /* Toggle-Chips für Kategorie */
+    .filter-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+    .filter-chip {
+      border-radius: 20px; padding: 6px 14px;
+      font-size: 0.78rem; cursor: pointer;
+      border: 1px solid var(--border); background: transparent;
+      color: var(--muted); font-family: 'Lora', serif;
+      transition: all 0.15s;
+    }
+    .filter-chip:hover { border-color: var(--border-gold); color: var(--text); }
+    .filter-chip.aktiv.gekauft  { background: rgba(59,130,246,0.2); border-color: #3B82F6; color: #7EB8F7; }
+    .filter-chip.aktiv.geschenkt{ background: rgba(234,88,12,0.2);  border-color: #EA580C; color: #FDBA74; }
+    .filter-chip.aktiv.alle     { background: rgba(200,134,10,0.2); border-color: var(--gold); color: var(--gold-hell); }
+
+    /* Länder-Checkboxen */
+    .filter-land-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 6px 0; font-size: 0.82rem; cursor: pointer;
+      border-bottom: 1px solid rgba(200,134,10,0.08);
+    }
+    .filter-land-item:last-child { border-bottom: none; }
+    .filter-land-item input[type="checkbox"] {
+      width: 16px; height: 16px; flex-shrink: 0;
+      accent-color: var(--gold); cursor: pointer;
+    }
+    .filter-land-item label { color: var(--text); cursor: pointer; margin: 0; font-size: 0.82rem; }
+    .filter-land-anzahl { margin-left: auto; font-size: 0.68rem; color: var(--muted); }
+
+    /* Jahr-Checkboxen */
+    .filter-jahr-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 5px 0; font-size: 0.82rem; cursor: pointer;
+    }
+    .filter-jahr-item input[type="checkbox"] {
+      width: 16px; height: 16px; flex-shrink: 0;
+      accent-color: var(--gold); cursor: pointer;
+    }
+    .filter-jahr-item label { color: var(--text); cursor: pointer; margin: 0; font-size: 0.82rem; }
+
+    .filter-footer {
+      padding: 12px 18px;
+      border-top: 1px solid var(--border);
+      display: flex; gap: 8px; flex-shrink: 0;
+    }
+    .filter-reset {
+      flex: 1; background: transparent; border: 1px solid var(--border);
+      color: var(--muted); border-radius: 8px; padding: 9px;
+      font-family: 'Lora', serif; font-size: 0.8rem; cursor: pointer;
+      transition: all 0.15s;
+    }
+    .filter-reset:hover { border-color: var(--border-gold); color: var(--text); }
+    .filter-anwenden {
+      flex: 1; background: var(--gold); border: none;
+      color: var(--bg); border-radius: 8px; padding: 9px;
+      font-family: 'Lora', serif; font-size: 0.8rem; font-weight: 600;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .filter-anwenden:hover { background: var(--gold-hell); }
+
+    /* Filter-Button (floating) */
+    #filter-btn {
+      position: fixed;
+      top: 64px; right: 12px;
+      z-index: 699;
+      background: var(--panel);
+      border: 1px solid var(--border-gold);
+      border-radius: 10px;
+      color: var(--gold);
+      padding: 8px 14px;
+      font-family: 'Lora', serif;
+      font-size: 0.78rem;
+      cursor: pointer;
+      display: flex; align-items: center; gap: 6px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+      transition: all 0.2s;
+    }
+    #filter-btn:hover { background: rgba(200,134,10,0.12); }
+    #filter-btn.aktiv { background: rgba(200,134,10,0.2); border-color: var(--gold); }
+    .filter-badge {
+      background: var(--gold); color: var(--bg);
+      border-radius: 50%; width: 16px; height: 16px;
+      font-size: 0.6rem; font-weight: 700;
+      display: none; align-items: center; justify-content: center;
+    }
+    .filter-badge.sichtbar { display: flex; }
   </style>
 </head>
 <body>
@@ -649,6 +826,27 @@
   display:none; align-items:center; gap:8px;
   transition:all 0.2s; white-space:nowrap;
 ">📋 Meine Gläser</button>
+
+<!-- ══ FILTER BUTTON ══ -->
+<button id="filter-btn" onclick="filterToggle()">
+  🔍 Filter
+  <span class="filter-badge" id="filter-badge"></span>
+</button>
+
+<!-- ══ FILTER PANEL ══ -->
+<div id="filter-panel">
+  <div class="filter-header">
+    <div class="filter-header-title">🔍 Filter</div>
+    <button class="filter-close" onclick="filterToggle()">✕</button>
+  </div>
+  <div class="filter-body" id="filter-body">
+    <!-- wird dynamisch befüllt -->
+  </div>
+  <div class="filter-footer">
+    <button class="filter-reset" onclick="filterZuruecksetzen()">↺ Zurücksetzen</button>
+    <button class="filter-anwenden" onclick="filterAnwenden()">✓ Anwenden</button>
+  </div>
+</div>
 
 <!-- ══ EXPORT BUTTON (nach Login) ══ -->
 <button id="export-btn" onclick="exportPanel()">
@@ -726,10 +924,11 @@ L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
 /* ═══════════════════════════════════════════════════════
    MARKER ICON
 ═══════════════════════════════════════════════════════ */
-function markerIcon() {
+function markerIcon(kategorie) {
+  const cls = kategorie === "gekauft" ? "gekauft" : kategorie === "geschenkt" ? "geschenkt" : "";
   return L.divIcon({
     className: "",
-    html: `<div class="marker-pin"><div class="pin-inner">🥃</div></div>`,
+    html: `<div class="marker-pin ${cls}"><div class="pin-inner">🥃</div></div>`,
     iconSize:    [32, 32],
     iconAnchor:  [16, 32],
     popupAnchor: [0, -36]
@@ -748,11 +947,18 @@ function popupHTML(g) {
     ? `<div class="popup-datum">📅 ${formatDatum(g.datum)}</div>`
     : "";
 
+  const kat = g.kategorie === "gekauft"
+    ? `<div class="popup-kategorie gekauft">✈ Selbst gekauft</div>`
+    : g.kategorie === "geschenkt"
+    ? `<div class="popup-kategorie geschenkt">🎁 Geschenkt bekommen</div>`
+    : "";
+
   return `<div>
     ${img}
     <div class="popup-body">
       <div class="popup-land">${esc(g.land)}</div>
       <div class="popup-name">${esc(g.name)}</div>
+      ${kat}
       ${datum}
       <div class="popup-text">${esc(g.text)}</div>
     </div>
@@ -770,7 +976,7 @@ function formatDatum(iso) {
 ═══════════════════════════════════════════════════════ */
 function alleGlaeserLaden() {
   GLAESER.forEach(g => {
-    const m = L.marker([g.lat, g.lng], { icon: markerIcon() })
+    const m = L.marker([g.lat, g.lng], { icon: markerIcon(g.kategorie) })
       .addTo(map)
       .bindPopup(popupHTML(g), { maxWidth: 280, minWidth: 280 });
     markerMap[g.id] = m;
@@ -887,12 +1093,18 @@ function formularOeffnen() {
              onchange="fotoGewaehlt(this)">
     </div>
 
-    <div class="form-section">📍 Ort</div>
+    <div class="form-section">🏷 Kategorie</div>
 
     <div class="form-group">
-      <label>Ort &amp; Land <span class="req">*</span></label>
-      <input type="text" id="f-name" placeholder="z.B. Berlin, Deutschland">
+      <label>Wie hast du das Glas bekommen? <span class="req">*</span></label>
+      <select id="f-kategorie">
+        <option value="">– bitte auswählen –</option>
+        <option value="gekauft">✈ Selbst auf Reisen gekauft</option>
+        <option value="geschenkt">🎁 Geschenkt bekommen</option>
+      </select>
     </div>
+
+    <div class="form-section">📍 Ort</div>
 
     <div class="form-group">
       <label>Land (kurz) <span class="req">*</span></label>
@@ -964,16 +1176,20 @@ function fotoGewaehlt(input) {
    GLAS HINZUFÜGEN
 ═══════════════════════════════════════════════════════ */
 async function glasHinzufuegen() {
-  const name  = document.getElementById("f-name")?.value.trim()  || "";
-  const land  = document.getElementById("f-land")?.value.trim()  || "";
-  const lat   = parseFloat(document.getElementById("f-lat")?.value  || "");
-  const lng   = parseFloat(document.getElementById("f-lng")?.value  || "");
-  const datum = document.getElementById("f-datum")?.value || "";
-  const text  = document.getElementById("f-text")?.value.trim()  || "";
+  const name      = document.getElementById("f-name")?.value.trim()      || "";
+  const land      = document.getElementById("f-land")?.value.trim()      || "";
+  const lat       = parseFloat(document.getElementById("f-lat")?.value   || "");
+  const lng       = parseFloat(document.getElementById("f-lng")?.value   || "");
+  const datum     = document.getElementById("f-datum")?.value            || "";
+  const text      = document.getElementById("f-text")?.value.trim()      || "";
+  const kategorie = document.getElementById("f-kategorie")?.value        || "";
 
   // Validierung
   if (!name || !land || !text) {
     zeigeFeedback("form-feedback", "Bitte Ort, Land und Geschichte ausfüllen.", "err"); return;
+  }
+  if (!kategorie) {
+    zeigeFeedback("form-feedback", "Bitte eine Kategorie auswählen (gekauft oder geschenkt).", "err"); return;
   }
   if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
     zeigeFeedback("form-feedback", "Ungültige Koordinaten. Breitengrad: −90 bis 90, Längengrad: −180 bis 180.", "err"); return;
@@ -1009,14 +1225,14 @@ async function glasHinzufuegen() {
     id: naechsteId++,
     name, land, lat, lng,
     foto: fotoUrl,
-    text, datum
+    text, datum, kategorie
   };
 
   // Zu GLAESER-Array hinzufügen
   GLAESER.push(glas);
 
   // Marker auf Karte setzen
-  const neuerMarker = L.marker([lat, lng], { icon: markerIcon() })
+  const neuerMarker = L.marker([lat, lng], { icon: markerIcon(glas.kategorie) })
     .addTo(map)
     .bindPopup(popupHTML(glas), { maxWidth: 280, minWidth: 280 })
     .openPopup();
@@ -1118,14 +1334,15 @@ function generiereDataJs() {
   const eintraege = GLAESER.map(g => {
     return [
       `  {`,
-      `    id:    ${g.id},`,
-      `    name:  ${JSON.stringify(g.name)},`,
-      `    land:  ${JSON.stringify(g.land)},`,
-      `    lat:   ${g.lat},`,
-      `    lng:   ${g.lng},`,
-      `    foto:  ${g.foto ? JSON.stringify(g.foto) : "null"},`,
-      `    text:  ${JSON.stringify(g.text)},`,
-      `    datum: ${g.datum ? JSON.stringify(g.datum) : "null"}`,
+      `    id:        ${g.id},`,
+      `    name:      ${JSON.stringify(g.name)},`,
+      `    land:      ${JSON.stringify(g.land)},`,
+      `    lat:       ${g.lat},`,
+      `    lng:       ${g.lng},`,
+      `    foto:      ${g.foto ? JSON.stringify(g.foto) : "null"},`,
+      `    text:      ${JSON.stringify(g.text)},`,
+      `    datum:     ${g.datum ? JSON.stringify(g.datum) : "null"},`,
+      `    kategorie: ${g.kategorie ? JSON.stringify(g.kategorie) : "null"}`,
       `  }`,
     ].join("\n");
   }).join(",\n\n");
@@ -1180,6 +1397,11 @@ function listeOeffnen() {
             <div class="glas-karte-info">
               <div class="glas-karte-name">${esc(g.name)}</div>
               <div class="glas-karte-land">${esc(g.land)}</div>
+              ${g.kategorie === "gekauft"
+                ? `<div class="glas-karte-kategorie gekauft">✈ Gekauft</div>`
+                : g.kategorie === "geschenkt"
+                ? `<div class="glas-karte-kategorie geschenkt">🎁 Geschenkt</div>`
+                : ""}
               ${g.datum ? `<div class="glas-karte-datum">📅 ${formatDatum(g.datum)}</div>` : ""}
             </div>
           </div>
@@ -1248,10 +1470,17 @@ function glasBearbeitenOeffnen(id) {
              onchange="fotoGewaehlt(this)">
     </div>
 
-    <div class="form-section">📍 Ort</div>
+    <div class="form-section">🏷 Kategorie</div>
     <div class="form-group">
-      <label>Ort &amp; Land <span class="req">*</span></label>
-      <input type="text" id="f-name" value="${esc(g.name)}" placeholder="z.B. Berlin, Deutschland">
+      <label>Wie hast du das Glas bekommen? <span class="req">*</span></label>
+      <select id="f-kategorie">
+        <option value="">– bitte auswählen –</option>
+        <option value="gekauft"   ${g.kategorie === "gekauft"   ? "selected" : ""}>✈ Selbst auf Reisen gekauft</option>
+        <option value="geschenkt" ${g.kategorie === "geschenkt" ? "selected" : ""}>🎁 Geschenkt bekommen</option>
+      </select>
+    </div>
+
+    <div class="form-section">📍 Ort</div>
     </div>
     <div class="form-group">
       <label>Land (kurz) <span class="req">*</span></label>
@@ -1297,15 +1526,19 @@ async function glasSpeichern(id) {
   const idx  = GLAESER.findIndex(g => g.id === id);
   if (idx < 0) return;
 
-  const name  = document.getElementById("f-name")?.value.trim()  || "";
-  const land  = document.getElementById("f-land")?.value.trim()  || "";
-  const lat   = parseFloat(document.getElementById("f-lat")?.value  || "");
-  const lng   = parseFloat(document.getElementById("f-lng")?.value  || "");
-  const datum = document.getElementById("f-datum")?.value || "";
-  const text  = document.getElementById("f-text")?.value.trim()  || "";
+  const name      = document.getElementById("f-name")?.value.trim()      || "";
+  const land      = document.getElementById("f-land")?.value.trim()      || "";
+  const lat       = parseFloat(document.getElementById("f-lat")?.value   || "");
+  const lng       = parseFloat(document.getElementById("f-lng")?.value   || "");
+  const datum     = document.getElementById("f-datum")?.value            || "";
+  const text      = document.getElementById("f-text")?.value.trim()      || "";
+  const kategorie = document.getElementById("f-kategorie")?.value        || "";
 
   if (!name || !land || !text) {
     zeigeFeedback("form-feedback", "Bitte Ort, Land und Geschichte ausfüllen.", "err"); return;
+  }
+  if (!kategorie) {
+    zeigeFeedback("form-feedback", "Bitte eine Kategorie auswählen.", "err"); return;
   }
   if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
     zeigeFeedback("form-feedback", "Ungültige Koordinaten. Breitengrad: −90 bis 90, Längengrad: −180 bis 180.", "err"); return;
@@ -1329,14 +1562,14 @@ async function glasSpeichern(id) {
   }
 
   // Daten aktualisieren
-  GLAESER[idx] = { id, name, land, lat, lng, foto: fotoUrl, text, datum };
+  GLAESER[idx] = { id, name, land, lat, lng, foto: fotoUrl, text, datum, kategorie };
 
   // Alten Marker entfernen & neuen setzen
   if (markerMap[id]) {
     map.removeLayer(markerMap[id]);
     delete markerMap[id];
   }
-  const neuerMarker = L.marker([lat, lng], { icon: markerIcon() })
+  const neuerMarker = L.marker([lat, lng], { icon: markerIcon(kategorie) })
     .addTo(map)
     .bindPopup(popupHTML(GLAESER[idx]), { maxWidth: 280, minWidth: 280 });
   markerMap[id] = neuerMarker;
@@ -1403,12 +1636,13 @@ function csvImportieren(input) {
 
       // Spalten-Indizes bestimmen
       const idx = {
-        name:  kopf.indexOf("name"),
-        land:  kopf.indexOf("land"),
-        lat:   kopf.indexOf("lat"),
-        lng:   kopf.indexOf("lng"),
-        text:  kopf.indexOf("text"),
-        datum: kopf.indexOf("datum"),
+        name:      kopf.indexOf("name"),
+        land:      kopf.indexOf("land"),
+        lat:       kopf.indexOf("lat"),
+        lng:       kopf.indexOf("lng"),
+        text:      kopf.indexOf("text"),
+        datum:     kopf.indexOf("datum"),
+        kategorie: kopf.indexOf("kategorie"),
       };
 
       // Pflichtfelder prüfen
@@ -1430,12 +1664,13 @@ function csvImportieren(input) {
       for (let i = 1; i < zeilen.length; i++) {
         const felder = csvZeileParsieren(zeilen[i]);
 
-        const name  = (felder[idx.name]  || "").trim();
-        const land  = (felder[idx.land]  || "").trim();
-        const lat   = parseFloat((felder[idx.lat] || "").replace(",", "."));
-        const lng   = parseFloat((felder[idx.lng] || "").replace(",", "."));
-        const text  = (felder[idx.text]  || "").trim();
-        const datum = idx.datum >= 0 ? (felder[idx.datum] || "").trim() : "";
+        const name      = (felder[idx.name]  || "").trim();
+        const land      = (felder[idx.land]  || "").trim();
+        const lat       = parseFloat((felder[idx.lat] || "").replace(",", "."));
+        const lng       = parseFloat((felder[idx.lng] || "").replace(",", "."));
+        const text      = (felder[idx.text]  || "").trim();
+        const datum     = idx.datum     >= 0 ? (felder[idx.datum]     || "").trim() : "";
+        const kategorie = idx.kategorie >= 0 ? (felder[idx.kategorie] || "").trim().toLowerCase() : "";
 
         // Zeile validieren
         if (!name || !land || !text) {
@@ -1476,12 +1711,13 @@ function csvImportieren(input) {
           name, land, lat, lng,
           foto:  null,
           text,
-          datum: datumFormatiert || null
+          datum: datumFormatiert || null,
+          kategorie: ["gekauft","geschenkt"].includes(kategorie) ? kategorie : null
         };
         GLAESER.push(glas);
 
         // Marker auf Karte setzen
-        const m = L.marker([lat, lng], { icon: markerIcon() })
+        const m = L.marker([lat, lng], { icon: markerIcon(glas.kategorie) })
           .addTo(map)
           .bindPopup(popupHTML(glas), { maxWidth: 280, minWidth: 280 });
         markerMap[glas.id] = m;
@@ -1578,9 +1814,9 @@ function csvFeedback(text, typ) {
 /* ── Vorlage-CSV herunterladen (Hilfsfunktion, falls nötig) ── */
 function csvVorlageHerunterladen() {
   const inhalt =
-    "name;land;lat;lng;text;datum\n" +
-    "Berlin, Deutschland;Deutschland;52.52;13.405;Erstes Glas meiner Sammlung – Souvenir vom Stadtbummel.;2024-06-15\n" +
-    "Wien, Österreich;Österreich;48.2082;16.3738;Schönes Glasl vom Naschmarkt.;2024-08-20\n";
+    "name;land;lat;lng;text;datum;kategorie\n" +
+    "Berlin, Deutschland;Deutschland;52.52;13.405;Erstes Glas meiner Sammlung – Souvenir vom Stadtbummel.;2024-06-15;gekauft\n" +
+    "Wien, Österreich;Österreich;48.2082;16.3738;Schönes Glasl vom Naschmarkt – ein Geschenk von Anna.;2024-08-20;geschenkt\n";
 
   const blob = new Blob(["\uFEFF" + inhalt], { type: "text/csv;charset=utf-8;" });
   const url  = URL.createObjectURL(blob);
@@ -1589,6 +1825,132 @@ function csvVorlageHerunterladen() {
   });
   a.click();
   URL.revokeObjectURL(url);
+}
+
+/* ═══════════════════════════════════════════════════════
+   FILTER PANEL
+═══════════════════════════════════════════════════════ */
+let filterZustand = { kategorien: [], laender: [], jahre: [] };
+
+function filterToggle() {
+  const panel = document.getElementById("filter-panel");
+  const offen = panel.classList.toggle("offen");
+  document.getElementById("filter-btn").classList.toggle("aktiv", offen);
+  if (offen) filterBefuellen();
+}
+
+function filterBefuellen() {
+  // Alle Länder sammeln (sortiert)
+  const laenderSet = [...new Set(GLAESER.map(g => g.land).filter(Boolean))].sort();
+  const laenderAnzahl = {};
+  GLAESER.forEach(g => { if (g.land) laenderAnzahl[g.land] = (laenderAnzahl[g.land] || 0) + 1; });
+
+  // Alle Jahre sammeln (sortiert absteigend)
+  const jahreSet = [...new Set(
+    GLAESER.map(g => g.datum ? g.datum.slice(0,4) : null).filter(Boolean)
+  )].sort((a,b) => b - a);
+
+  document.getElementById("filter-body").innerHTML = `
+    <div class="filter-section">Kategorie</div>
+    <div class="filter-chips">
+      <button class="filter-chip alle ${filterZustand.kategorien.length === 0 ? "aktiv" : ""}"
+              onclick="filterKategorieToggle('alle')">🥃 Alle</button>
+      <button class="filter-chip gekauft ${filterZustand.kategorien.includes('gekauft') ? "aktiv" : ""}"
+              onclick="filterKategorieToggle('gekauft')">✈ Gekauft</button>
+      <button class="filter-chip geschenkt ${filterZustand.kategorien.includes('geschenkt') ? "aktiv" : ""}"
+              onclick="filterKategorieToggle('geschenkt')">🎁 Geschenkt</button>
+    </div>
+
+    <div class="filter-section">Land</div>
+    ${laenderSet.length === 0
+      ? `<p style="color:var(--muted);font-size:0.8rem;">Keine Länder vorhanden.</p>`
+      : laenderSet.map(l => `
+        <div class="filter-land-item">
+          <input type="checkbox" id="fl-${esc(l)}"
+                 ${filterZustand.laender.includes(l) ? "checked" : ""}
+                 onchange="filterLandToggle('${esc(l)}', this.checked)">
+          <label for="fl-${esc(l)}">${esc(l)}</label>
+          <span class="filter-land-anzahl">${laenderAnzahl[l]}</span>
+        </div>`).join("")}
+
+    ${jahreSet.length > 0 ? `
+    <div class="filter-section">Jahr</div>
+    ${jahreSet.map(j => `
+      <div class="filter-jahr-item">
+        <input type="checkbox" id="fj-${j}"
+               ${filterZustand.jahre.includes(j) ? "checked" : ""}
+               onchange="filterJahrToggle('${j}', this.checked)">
+        <label for="fj-${j}">${j}</label>
+      </div>`).join("")}` : ""}
+  `;
+}
+
+function filterKategorieToggle(wert) {
+  if (wert === "alle") {
+    filterZustand.kategorien = [];
+  } else {
+    const idx = filterZustand.kategorien.indexOf(wert);
+    if (idx >= 0) filterZustand.kategorien.splice(idx, 1);
+    else filterZustand.kategorien.push(wert);
+  }
+  filterBefuellen();
+}
+
+function filterLandToggle(land, checked) {
+  if (checked) { if (!filterZustand.laender.includes(land)) filterZustand.laender.push(land); }
+  else { filterZustand.laender = filterZustand.laender.filter(l => l !== land); }
+}
+
+function filterJahrToggle(jahr, checked) {
+  if (checked) { if (!filterZustand.jahre.includes(jahr)) filterZustand.jahre.push(jahr); }
+  else { filterZustand.jahre = filterZustand.jahre.filter(j => j !== jahr); }
+}
+
+function filterAnwenden() {
+  const { kategorien, laender, jahre } = filterZustand;
+  let sichtbar = 0;
+
+  GLAESER.forEach(g => {
+    const katOk  = kategorien.length === 0 || kategorien.includes(g.kategorie);
+    const landOk = laender.length === 0    || laender.includes(g.land);
+    const jahrOk = jahre.length === 0      || (g.datum && jahre.includes(g.datum.slice(0,4)));
+    const zeigen = katOk && landOk && jahrOk;
+
+    const m = markerMap[g.id];
+    if (m) {
+      if (zeigen) { m.addTo(map); sichtbar++; }
+      else        { map.removeLayer(m); }
+    }
+  });
+
+  // Badge aktualisieren
+  const aktiveFilter = kategorien.length + laender.length + jahre.length;
+  const badge = document.getElementById("filter-badge");
+  badge.textContent = aktiveFilter;
+  badge.classList.toggle("sichtbar", aktiveFilter > 0);
+  document.getElementById("filter-btn").classList.toggle("aktiv", aktiveFilter > 0);
+
+  // Zähler anzeigen
+  document.getElementById("zaehler").textContent =
+    sichtbar + " / " + GLAESER.length + " Gläser";
+
+  // Panel schließen
+  document.getElementById("filter-panel").classList.remove("offen");
+}
+
+function filterZuruecksetzen() {
+  filterZustand = { kategorien: [], laender: [], jahre: [] };
+  filterBefuellen();
+
+  // Alle Marker wieder einblenden
+  GLAESER.forEach(g => { if (markerMap[g.id]) markerMap[g.id].addTo(map); });
+
+  // Badge zurücksetzen
+  document.getElementById("filter-badge").classList.remove("sichtbar");
+  document.getElementById("filter-btn").classList.remove("aktiv");
+
+  const n = GLAESER.length;
+  document.getElementById("zaehler").textContent = n + (n === 1 ? " Glas" : " Gläser");
 }
 
 /* ═══════════════════════════════════════════════════════
