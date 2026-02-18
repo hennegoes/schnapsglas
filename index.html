@@ -1952,15 +1952,17 @@ function csvImportieren(input) {
           kategorie: ["gekauft","geschenkt"].includes(kategorie) ? kategorie : null
         };
         GLAESER.push(glas);
-
-        // Marker auf Karte setzen
-        const m = L.marker([lat, lng], { icon: markerIcon(glas.kategorie) })
-          .addTo(map)
-          .bindPopup(popupHTML(glas), { maxWidth: 280, minWidth: 280 });
-        markerMap[glas.id] = m;
-
         hinzugefuegt++;
       }
+
+      // Alle neuen Marker auf Karte setzen (gruppiert, mit Foto)
+      const neueOrte = new Set(
+        GLAESER.slice(GLAESER.length - hinzugefuegt).map(g => `${g.lat},${g.lng}`)
+      );
+      neueOrte.forEach(key => {
+        const [lat, lng] = key.split(",").map(Number);
+        markerAktualisieren(lat, lng);
+      });
 
       // Zähler aktualisieren
       const n = GLAESER.length;
