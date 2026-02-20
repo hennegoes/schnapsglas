@@ -1,6 +1,6 @@
 // data.js – Schnapsglas-Sammlung
-// Zuletzt aktualisiert: 19.2.2026
-// 89 Gläser gespeichert
+// Zuletzt aktualisiert: 20.2.2026
+// 90 Gläser gespeichert
 
 const GLAESER = [
   {
@@ -1158,5 +1158,18 @@ const GLAESER = [
     text:      "Ein schönes Geschenk von Alexander Gassner.",
     datum:     "2024-11-19",
     kategorie: "geschenkt"
+  },
+
+  {
+    id:        92,
+    name:      "Taipei",
+    land:      "Taiwan",
+    lat:       25.0384,
+    lng:       121.5637,
+    foto:      null,
+    fotoUrl:   "https://cdn.sanity.io/images/nxpteyfv/goguides/8073613adf9cb2bfcdc7672e654a38ff2892dd15-1600x1067.jpg",
+    text:      "Auf Sir Yama einmal über die gesamte Insel.",
+    datum:     "2024-11-20",
+    kategorie: "gekauft"
   }
 ];
